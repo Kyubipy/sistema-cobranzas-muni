@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Sistema de Cobranzas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
+  
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-white text-center">
+        <div class="mb-4">
+          <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center">
+            <span class="text-4xl">⚖️</span>
+          </div>
+        </div>
+        <h1 class="text-2xl font-bold">Sistema de Cobranzas</h1>
+        <p class="text-indigo-200 text-sm mt-2">Municipalidad de Asunción</p>
+      </div>
+
+      <!-- Formulario -->
+      <div class="p-8">
+        <form id="loginForm" class="space-y-6">
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              📧 Email
+            </label>
+            <input 
+              type="email" 
+              id="email" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              placeholder="tu-email@municipalidad.gov.py"
+            >
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              🔒 Contraseña
+            </label>
+            <input 
+              type="password" 
+              id="password" 
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              placeholder="••••••••"
+            >
+          </div>
+
+          <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          </div>
+
+          <button 
+            type="submit" 
+            id="btnLogin"
+            class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg font-bold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Iniciar Sesión
+          </button>
+
+        </form>
+
+        <!-- Link al registro -->
+        <div class="mt-6 text-center border-t pt-6">
+          <p class="text-sm text-gray-600">
+            ¿No tenés cuenta? 
+            <a href="registro.html" class="text-green-600 hover:text-green-800 font-semibold">
+              Crear cuenta nueva
+            </a>
+          </p>
+        </div>
+
+        <!-- Info de usuarios de prueba -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p class="text-xs font-semibold text-blue-900 mb-2">👤 Usuarios de prueba:</p>
+          <div class="text-xs text-blue-800 space-y-1">
+            <p><strong>Abogado:</strong> juan@municipalidad.gov.py / 123456</p>
+            <p><strong>Jefe:</strong> jefe@municipalidad.gov.py / jefe123</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Configuración de Supabase
+    const SUPABASE_URL = 'https://wyxrtqudbjbwwlmqlrbc.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5eHJ0cXVkYmpid3dsbXFscmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTc2ODcsImV4cCI6MjA3Mzg3MzY4N30.vV0m-2D9Hod6t3CwW9ggFlgmMewlF0SaeuC2horX8fs';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let procesando = false;
+
+    // Verificar si ya hay sesión activa
+    window.addEventListener('DOMContentLoaded', () => {
+      const usuarioGuardado = localStorage.getItem('usuario_cobranzas');
+      if (usuarioGuardado) {
+        const usuario = JSON.parse(usuarioGuardado);
+        redirigirSegunRol(usuario);
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (procesando) return;
+      procesando = true;
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('errorMessage');
+      const boton = document.getElementById('btnLogin');
+      const textoOriginal = boton.innerHTML;
+
+      // Ocultar error previo
+      errorDiv.classList.add('hidden');
+
+      // Deshabilitar botón
+      boton.disabled = true;
+      boton.innerHTML = `
+        <div class="flex items-center justify-center gap-2">
+          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Verificando...</span>
+        </div>
+      `;
+
+      try {
+        // Buscar usuario en la base de datos
+        const { data: usuarios, error } = await supabase
+          .from('usuarios_cobranzas')
+          .select('*')
+          .eq('email', email)
+          .eq('password', password) // En producción debería ser hash
+          .eq('activo', true)
+          .limit(1);
+
+        if (error) throw error;
+
+        if (!usuarios || usuarios.length === 0) {
+          throw new Error('Email o contraseña incorrectos');
+        }
+
+        const usuario = usuarios[0];
+
+        // Guardar en localStorage
+        localStorage.setItem('usuario_cobranzas', JSON.stringify(usuario));
+
+        // Mostrar mensaje de éxito
+        boton.innerHTML = '✅ Acceso concedido';
+        boton.classList.add('bg-green-600');
+
+        // Redirigir según rol
+        setTimeout(() => {
+          redirigirSegunRol(usuario);
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en login:', error);
+        errorDiv.textContent = '❌ ' + (error.message || 'Error al iniciar sesión');
+        errorDiv.classList.remove('hidden');
+        
+        // Restaurar botón
+        boton.disabled = false;
+        boton.innerHTML = textoOriginal;
+        procesando = false;
+      }
+    });
+
+    function redirigirSegunRol(usuario) {
+      if (usuario.rol === 'jefe') {
+        window.location.href = 'jefe.html';
+      } else {
+        window.location.href = 'abogados.html';
+      }
+    }
+  </script>
+
+</body>
+</html>
