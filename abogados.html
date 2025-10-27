@@ -3,663 +3,491 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Cobranzas - Abogados</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Panel de Abogado - Sistema de Cobranzas</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100">
-  <div id="app">
-    <div class="min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Cargando...</p>
+<body class="bg-gray-50 min-h-screen">
+  
+  <!-- Header con usuario y cerrar sesión -->
+  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">⚖️</span>
+          <div>
+            <h1 class="text-xl font-bold">Sistema de Cobranzas</h1>
+            <p class="text-sm text-purple-100">Municipalidad de Asunción</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <div class="flex items-center gap-2">
+              <span>👤</span>
+              <span id="nombreUsuario" class="font-semibold"></span>
+            </div>
+            <div class="text-xs text-purple-100" id="areaUsuario"></div>
+          </div>
+          <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
+            <span>🚪</span>
+            <span class="hidden sm:inline">Salir</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Formulario de registro de actuación -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <span>📝</span> Registrar Actuación Judicial
+      </h2>
+      
+      <form id="actuacionForm" class="space-y-6">
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Seleccionar o crear expediente -->
+          <div class="md:col-span-2">
+            <label class="block text-gray-700 font-semibold mb-2">
+              🗂️ Expediente
+            </label>
+            <div class="flex gap-2">
+              <select 
+                id="expedienteExistente" 
+                class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+              >
+                <option value="">Nuevo expediente...</option>
+              </select>
+              <button 
+                type="button"
+                id="btnNuevoExpediente"
+                class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+              >
+                ➕ Nuevo
+              </button>
+            </div>
+          </div>
+
+          <!-- Campos para nuevo expediente (ocultos por defecto) -->
+          <div id="camposNuevoExpediente" class="md:col-span-2 hidden space-y-4 bg-green-50 p-4 rounded-lg border-2 border-green-200">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-700 font-semibold mb-2">Número de Expediente</label>
+                <input 
+                  type="text" 
+                  id="numeroExpediente" 
+                  placeholder="Ej: 2024-001"
+                  class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                >
+              </div>
+              <div>
+                <label class="block text-gray-700 font-semibold mb-2">Monto Reclamado (Gs.)</label>
+                <input 
+                  type="number" 
+                  id="montoReclamado" 
+                  placeholder="0"
+                  class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                >
+              </div>
+            </div>
+            <div>
+              <label class="block text-gray-700 font-semibold mb-2">Descripción del Caso</label>
+              <textarea 
+                id="descripcionCaso" 
+                rows="2"
+                placeholder="Breve descripción del caso..."
+                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Historial del expediente seleccionado -->
+          <div id="historialExpediente" class="md:col-span-2 hidden bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+            <h3 class="font-bold text-blue-800 mb-2">📋 Historial del Expediente</h3>
+            <div id="listaHistorial" class="space-y-2 text-sm text-gray-700"></div>
+          </div>
+
+          <!-- Tipo de actuación -->
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">⚖️ Tipo de Actuación</label>
+            <select 
+              id="tipoActuacion" 
+              required
+              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+            >
+              <option value="">Seleccionar...</option>
+              <option value="Demanda">Demanda</option>
+              <option value="Contestación">Contestación</option>
+              <option value="Audiencia">Audiencia</option>
+              <option value="Sentencia">Sentencia</option>
+              <option value="Recurso">Recurso</option>
+              <option value="Ejecución">Ejecución</option>
+              <option value="Trámite">Trámite</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <!-- Fecha de actuación -->
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">📅 Fecha</label>
+            <input 
+              type="date" 
+              id="fechaActuacion" 
+              required
+              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+            >
+          </div>
+
+          <!-- Descripción -->
+          <div class="md:col-span-2">
+            <label class="block text-gray-700 font-semibold mb-2">📄 Descripción</label>
+            <textarea 
+              id="descripcionActuacion" 
+              required
+              rows="3"
+              placeholder="Describe la actuación realizada..."
+              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+            ></textarea>
+          </div>
+
+          <!-- Adjuntar archivo -->
+          <div class="md:col-span-2">
+            <label class="block text-gray-700 font-semibold mb-2">📎 Adjuntar Documento (opcional)</label>
+            <input 
+              type="file" 
+              id="archivoActuacion" 
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+            >
+            <p class="text-sm text-gray-500 mt-1">Formatos: PDF, Word, Imágenes (máx. 5MB)</p>
+          </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div id="errorMessage" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded text-red-700"></div>
+        <div id="successMessage" class="hidden bg-green-50 border-l-4 border-green-500 p-4 rounded text-green-700"></div>
+
+        <!-- Botones -->
+        <div class="flex gap-4">
+          <button 
+            type="submit"
+            id="btnGuardar"
+            class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition"
+          >
+            💾 Guardar Actuación
+          </button>
+          <button 
+            type="button"
+            onclick="limpiarFormulario()"
+            class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition"
+          >
+            🔄 Limpiar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Lista de actuaciones recientes -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span>📊</span> Mis Actuaciones Recientes
+      </h2>
+      <div id="listaActuaciones" class="space-y-3">
+        <p class="text-gray-500 text-center py-8">Cargando actuaciones...</p>
       </div>
     </div>
   </div>
 
   <script>
     // Configuración de Supabase
-    const SUPABASE_URL = 'https://wyxrtqudbjbwwlmqlrbc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5eHJ0cXVkYmpid3dsbXFscmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTc2ODcsImV4cCI6MjA3Mzg3MzY4N30.vV0m-2D9Hod6t3CwW9ggFlgmMewlF0SaeuC2horX8fs';
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseUrl = 'https://nxdjnoctsuzuemxqkybf.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54ZGpub2N0c3V6dWVteHFreWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk3MjU0MDIsImV4cCI6MjA0NTMwMTQwMn0.9wre1y66Go2Z89sNM-wTSgeVB1-iiPN2gTFR5ctu30s';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Variables globales
-    let expedientes = [];
-    let actuaciones = [];
-    let vistaActual = 'formulario';
-    let usuarioActual = null; // Ahora viene del login
-    let expedienteSeleccionado = null;
-    let expedientesExistentes = [];
-    let guardando = false;
+    let usuarioActual = null;
 
-    async function init() {
-      console.log('Iniciando aplicación...');
-      
-      // Verificar si hay usuario logueado
-      const usuarioGuardado = localStorage.getItem('usuario_cobranzas');
+    // Verificar sesión al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      const usuarioGuardado = localStorage.getItem('usuarioActual');
       if (!usuarioGuardado) {
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
       }
-
+      
       usuarioActual = JSON.parse(usuarioGuardado);
       
-      // Si es jefe, redirigir
-      if (usuarioActual.rol === 'jefe') {
-        window.location.href = 'jefe.html';
+      // Verificar que sea abogado
+      if (usuarioActual.rol !== 'abogado') {
+        alert('Acceso no autorizado');
+        localStorage.removeItem('usuarioActual');
+        window.location.href = 'index.html';
         return;
       }
 
-      await cargarExpedientesExistentes();
-      await cargarMisExpedientes();
-      renderApp();
-      suscribirTiempoReal();
+      // Mostrar info del usuario
+      document.getElementById('nombreUsuario').textContent = usuarioActual.nombre_completo;
+      document.getElementById('areaUsuario').textContent = usuarioActual.area;
+
+      // Establecer fecha de hoy
+      document.getElementById('fechaActuacion').valueAsDate = new Date();
+
+      // Cargar expedientes y actuaciones
+      cargarExpedientes();
+      cargarActuaciones();
+      suscribirCambios();
+    });
+
+    // Función para cerrar sesión
+    function cerrarSesion() {
+      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
+        localStorage.removeItem('usuarioActual');
+        window.location.href = 'index.html';
+      }
     }
 
-    async function cargarExpedientesExistentes() {
+    // Toggle nuevo expediente
+    document.getElementById('btnNuevoExpediente').addEventListener('click', () => {
+      const campos = document.getElementById('camposNuevoExpediente');
+      const select = document.getElementById('expedienteExistente');
+      
+      if (campos.classList.contains('hidden')) {
+        campos.classList.remove('hidden');
+        select.value = '';
+        select.disabled = true;
+        document.getElementById('historialExpediente').classList.add('hidden');
+      } else {
+        campos.classList.add('hidden');
+        select.disabled = false;
+      }
+    });
+
+    // Cargar expedientes del abogado
+    async function cargarExpedientes() {
       try {
         const { data, error } = await supabase
           .from('expedientes_cobranzas')
-          .select('id, num_expediente, anio, caratula')
-          .eq('abogado_responsable', usuarioActual)
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        expedientesExistentes = data || [];
-        console.log('Expedientes para selector:', expedientesExistentes.length);
-        actualizarSelectorExpedientes();
-      } catch (error) {
-        console.error('Error cargando expedientes:', error);
-      }
-    }
-
-    function actualizarSelectorExpedientes() {
-      const selector = document.querySelector('select[name="expedienteExistente"]');
-      if (selector) {
-        const valorActual = selector.value;
-        selector.innerHTML = `
-          <option value="">-- Seleccione un expediente --</option>
-          ${expedientesExistentes.map(exp => `
-            <option value="${exp.id}">
-              Expte ${exp.num_expediente}/${exp.anio} - ${exp.caratula}
-            </option>
-          `).join('')}
-        `;
-        selector.value = valorActual;
-      }
-    }
-
-    async function cargarMisExpedientes() {
-      try {
-        const { data: exps, error: expError } = await supabase
-          .from('expedientes_cobranzas')
           .select('*')
-          .eq('abogado_responsable', usuarioActual)
-          .order('fecha_creacion', { ascending: false });
-        
-        if (expError) throw expError;
-        expedientes = exps || [];
+          .eq('usuario_id', usuarioActual.id)
+          .order('created_at', { ascending: false });
 
-        if (expedientes.length > 0) {
-          const expedienteIds = expedientes.map(e => e.id);
-          const { data: acts, error: actError } = await supabase
-            .from('actuaciones_cobranzas')
-            .select('*')
-            .in('expediente_cobranza_id', expedienteIds)
-            .order('fecha_actuacion', { ascending: false });
-          
-          if (actError) throw actError;
-          actuaciones = acts || [];
+        if (error) throw error;
+
+        const select = document.getElementById('expedienteExistente');
+        select.innerHTML = '<option value="">Nuevo expediente...</option>';
+        
+        data.forEach(exp => {
+          const option = document.createElement('option');
+          option.value = exp.id;
+          option.textContent = `${exp.numero_expediente} - ${exp.descripcion_caso}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar expedientes:', error);
+      }
+    }
+
+    // Mostrar historial al seleccionar expediente
+    document.getElementById('expedienteExistente').addEventListener('change', async (e) => {
+      const expedienteId = e.target.value;
+      const historialDiv = document.getElementById('historialExpediente');
+      const listaHistorial = document.getElementById('listaHistorial');
+
+      if (!expedienteId) {
+        historialDiv.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('actuaciones_cobranzas')
+          .select('*')
+          .eq('expediente_id', expedienteId)
+          .order('fecha_actuacion', { ascending: false });
+
+        if (error) throw error;
+
+        if (data.length > 0) {
+          listaHistorial.innerHTML = data.map(act => `
+            <div class="p-2 bg-white rounded border border-blue-300">
+              <strong>${new Date(act.fecha_actuacion).toLocaleDateString()}</strong> - ${act.tipo_actuacion}: ${act.descripcion}
+            </div>
+          `).join('');
+          historialDiv.classList.remove('hidden');
+        } else {
+          historialDiv.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('Error al cargar historial:', error);
+      }
+    });
+
+    // Enviar formulario
+    let procesando = false;
+    document.getElementById('actuacionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (procesando) return;
+      procesando = true;
+
+      const errorDiv = document.getElementById('errorMessage');
+      const successDiv = document.getElementById('successMessage');
+      const boton = document.getElementById('btnGuardar');
+      const textoOriginal = boton.innerHTML;
+
+      errorDiv.classList.add('hidden');
+      successDiv.classList.add('hidden');
+
+      boton.disabled = true;
+      boton.innerHTML = '⏳ Guardando...';
+
+      try {
+        let expedienteId;
+        const expedienteExistente = document.getElementById('expedienteExistente').value;
+        
+        // Crear nuevo expediente si es necesario
+        if (!expedienteExistente) {
+          const numeroExp = document.getElementById('numeroExpediente').value.trim();
+          const montoExp = document.getElementById('montoReclamado').value;
+          const descripcionExp = document.getElementById('descripcionCaso').value.trim();
+
+          if (!numeroExp || !descripcionExp) {
+            throw new Error('Completá todos los campos del nuevo expediente');
+          }
+
+          const { data: nuevoExp, error: errorExp } = await supabase
+            .from('expedientes_cobranzas')
+            .insert([{
+              numero_expediente: numeroExp,
+              descripcion_caso: descripcionExp,
+              monto_reclamado: montoExp || 0,
+              abogado_responsable: usuarioActual.nombre_completo,
+              usuario_id: usuarioActual.id,
+              area: usuarioActual.area,
+              estado: 'Activo'
+            }])
+            .select()
+            .single();
+
+          if (errorExp) throw errorExp;
+          expedienteId = nuevoExp.id;
+        } else {
+          expedienteId = expedienteExistente;
         }
 
-        if (vistaActual === 'historial') renderHistorial();
+        // Subir archivo si existe
+        let archivoUrl = null;
+        const archivoInput = document.getElementById('archivoActuacion');
+        if (archivoInput.files.length > 0) {
+          const archivo = archivoInput.files[0];
+          const nombreArchivo = `${Date.now()}_${archivo.name}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('documentos-cobranzas')
+            .upload(nombreArchivo, archivo);
+
+          if (uploadError) throw uploadError;
+
+          const { data: urlData } = supabase.storage
+            .from('documentos-cobranzas')
+            .getPublicUrl(nombreArchivo);
+          
+          archivoUrl = urlData.publicUrl;
+        }
+
+        // Crear actuación
+        const { error: errorActuacion } = await supabase
+          .from('actuaciones_cobranzas')
+          .insert([{
+            expediente_id: expedienteId,
+            tipo_actuacion: document.getElementById('tipoActuacion').value,
+            fecha_actuacion: document.getElementById('fechaActuacion').value,
+            descripcion: document.getElementById('descripcionActuacion').value.trim(),
+            abogado: usuarioActual.nombre_completo,
+            usuario_id: usuarioActual.id,
+            archivo_url: archivoUrl
+          }]);
+
+        if (errorActuacion) throw errorActuacion;
+
+        successDiv.textContent = '✅ Actuación registrada exitosamente';
+        successDiv.classList.remove('hidden');
+
+        limpiarFormulario();
+        await cargarExpedientes();
+        await cargarActuaciones();
+
       } catch (error) {
-        console.error('Error:', error);
-        alert('Error al cargar datos: ' + error.message);
+        errorDiv.textContent = '⚠️ ' + error.message;
+        errorDiv.classList.remove('hidden');
+      } finally {
+        boton.disabled = false;
+        boton.innerHTML = textoOriginal;
+        procesando = false;
+      }
+    });
+
+    // Cargar actuaciones del abogado
+    async function cargarActuaciones() {
+      try {
+        const { data, error } = await supabase
+          .from('actuaciones_cobranzas')
+          .select(`
+            *,
+            expedientes_cobranzas (numero_expediente, descripcion_caso)
+          `)
+          .eq('usuario_id', usuarioActual.id)
+          .order('fecha_actuacion', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+
+        const lista = document.getElementById('listaActuaciones');
+        
+        if (data.length === 0) {
+          lista.innerHTML = '<p class="text-gray-500 text-center py-8">No hay actuaciones registradas aún</p>';
+          return;
+        }
+
+        lista.innerHTML = data.map(act => `
+          <div class="border-l-4 border-purple-500 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-bold text-purple-600">${act.expedientes_cobranzas.numero_expediente}</span>
+                  <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString()}</span>
+                </div>
+                <div class="text-sm text-gray-600 mb-1">${act.expedientes_cobranzas.descripcion_caso}</div>
+                <div class="font-semibold text-gray-800">${act.tipo_actuacion}</div>
+                <div class="text-sm text-gray-600 mt-1">${act.descripcion}</div>
+                ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">📎 Ver documento</a>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error al cargar actuaciones:', error);
+        document.getElementById('listaActuaciones').innerHTML = '<p class="text-red-500 text-center py-8">Error al cargar actuaciones</p>';
       }
     }
 
-    function suscribirTiempoReal() {
+    // Suscribirse a cambios en tiempo real
+    function suscribirCambios() {
       supabase
-        .channel('cobranzas_channel')
+        .channel('cambios-actuaciones')
         .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'expedientes_cobranzas' },
-          (payload) => {
-            console.log('Cambio en expedientes:', payload);
-            cargarExpedientesExistentes();
-            cargarMisExpedientes();
-          }
-        )
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'actuaciones_cobranzas' },
-          (payload) => {
-            console.log('Cambio en actuaciones:', payload);
-            cargarMisExpedientes();
-          }
+          { event: '*', schema: 'public', table: 'actuaciones_cobranzas', filter: `usuario_id=eq.${usuarioActual.id}` },
+          () => cargarActuaciones()
         )
         .subscribe();
     }
 
-    async function subirArchivo(file) {
-      const fileName = `${Date.now()}_${file.name}`;
-      
-      const { data, error } = await supabase.storage
-        .from('actuaciones')
-        .upload(fileName, file);
-      
-      if (error) {
-        console.error('Error subiendo archivo:', error);
-        throw error;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('actuaciones')
-        .getPublicUrl(fileName);
-      
-      console.log('Archivo subido:', fileName, 'URL:', urlData.publicUrl);
-      
-      return { nombre: file.name, url: urlData.publicUrl };
-    }
-
-    async function guardarActuacion(event) {
-      event.preventDefault();
-      
-      if (guardando) {
-        console.log('Ya hay un guardado en proceso...');
-        return;
-      }
-      
-      guardando = true;
-      
-      const form = event.target;
-      const formData = new FormData(form);
-      const tipoRegistro = formData.get('tipoRegistro');
-      const archivo = formData.get('archivo');
-      
-      const boton = document.getElementById('btnGuardar');
-      const textoOriginal = boton.innerHTML;
-      
-      boton.disabled = true;
-      boton.classList.add('opacity-50', 'cursor-not-allowed');
-      boton.innerHTML = `
-        <div class="flex items-center justify-center gap-3">
-          <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Guardando actuación...</span>
-        </div>
-      `;
-
-      try {
-        let expedienteId;
-
-        if (tipoRegistro === 'nuevo') {
-          if (!formData.get('numExpediente') || !formData.get('caratula')) {
-            alert('Complete número de expediente y carátula');
-            return;
-          }
-
-          const tieneMonto = formData.get('tieneMonto') === 'on';
-          if (tieneMonto && !formData.get('monto')) {
-            alert('Ingrese el monto del juicio');
-            return;
-          }
-
-          const { data: nuevoExp, error: expError } = await supabase
-            .from('expedientes_cobranzas')
-            .insert([{
-              num_expediente: formData.get('numExpediente'),
-              anio: formData.get('anio'),
-              caratula: formData.get('caratula'),
-              tiene_monto: tieneMonto,
-              monto: tieneMonto ? parseFloat(formData.get('monto')) || 0 : 0,
-              abogado_responsable: usuarioActual
-            }])
-            .select()
-            .single();
-          
-          if (expError) throw expError;
-          expedienteId = nuevoExp.id;
-          
-          console.log('Nuevo expediente creado:', expedienteId);
-          await cargarExpedientesExistentes();
-        } else {
-          expedienteId = parseInt(formData.get('expedienteExistente'));
-          if (!expedienteId) {
-            alert('Seleccione un expediente');
-            return;
-          }
-        }
-
-        if (!formData.get('fechaActuacion') || !formData.get('descripcionActuacion')) {
-          alert('Complete fecha y descripción de la actuación');
-          return;
-        }
-
-        let archivoData = { nombre: null, url: null };
-        if (archivo && archivo.size > 0) {
-          console.log('Subiendo archivo:', archivo.name);
-          
-          const actExpediente = actuaciones.filter(a => a.expediente_cobranza_id === expedienteId);
-          const archivoExiste = actExpediente.some(a => a.archivo_nombre === archivo.name);
-          
-          if (archivoExiste) {
-            const confirmar = confirm(`⚠️ Ya existe un archivo llamado "${archivo.name}" en este expediente.\n\n¿Querés subirlo de todas formas?`);
-            if (!confirmar) {
-              return;
-            }
-          }
-          
-          archivoData = await subirArchivo(archivo);
-        }
-
-        const { error: actError } = await supabase
-          .from('actuaciones_cobranzas')
-          .insert([{
-            expediente_cobranza_id: expedienteId,
-            abogado: usuarioActual,
-            fecha_actuacion: formData.get('fechaActuacion'),
-            descripcion_actuacion: formData.get('descripcionActuacion'),
-            archivo_url: archivoData.url,
-            archivo_nombre: archivoData.nombre,
-            observaciones: formData.get('observaciones') || ''
-          }]);
-        
-        if (actError) throw actError;
-
-        alert('✅ Actuación registrada exitosamente');
-        form.reset();
-        
-        document.getElementById('camposExpedienteNuevo').style.display = 'none';
-        document.getElementById('camposExpedienteExistente').style.display = 'block';
-        const radioExistente = document.querySelector('input[name="tipoRegistro"][value="existente"]');
-        if (radioExistente) radioExistente.checked = true;
-        
-        await cargarExpedientesExistentes();
-        await cargarMisExpedientes();
-        
-      } catch (error) {
-        console.error('Error:', error);
-        alert('❌ Error: ' + error.message);
-      } finally {
-        guardando = false;
-        if (boton) {
-          boton.disabled = false;
-          boton.classList.remove('opacity-50', 'cursor-not-allowed');
-          boton.innerHTML = textoOriginal;
-        }
-      }
-    }
-
-    function cambiarVista(vista) {
-      vistaActual = vista;
-      renderApp();
-    }
-
-    function cambiarTipoRegistro(tipo) {
-      if (tipo === 'nuevo') {
-        document.getElementById('camposExpedienteNuevo').style.display = 'block';
-        document.getElementById('camposExpedienteExistente').style.display = 'none';
-        // Ocultar resumen de actuaciones
-        const resumen = document.getElementById('resumenActuaciones');
-        if (resumen) resumen.style.display = 'none';
-      } else {
-        document.getElementById('camposExpedienteNuevo').style.display = 'none';
-        document.getElementById('camposExpedienteExistente').style.display = 'block';
-      }
-    }
-
-    function mostrarActuacionesExpediente(expedienteId) {
-      const resumen = document.getElementById('resumenActuaciones');
-      const lista = document.getElementById('listaActuaciones');
-      
-      if (!expedienteId || !resumen || !lista) {
-        if (resumen) resumen.style.display = 'none';
-        return;
-      }
-
-      // Filtrar actuaciones de este expediente
-      const actsExp = actuaciones.filter(a => a.expediente_cobranza_id === parseInt(expedienteId))
-        .sort((a, b) => new Date(b.fecha_actuacion) - new Date(a.fecha_actuacion));
-
-      if (actsExp.length === 0) {
-        resumen.style.display = 'block';
-        lista.innerHTML = '<p class="text-sm text-gray-600 italic">Este expediente no tiene actuaciones registradas aún.</p>';
-        return;
-      }
-
-      // Mostrar actuaciones
-      resumen.style.display = 'block';
-      lista.innerHTML = actsExp.map((act, index) => `
-        <div class="bg-white border-l-4 border-blue-500 rounded p-3 text-sm">
-          <div class="flex justify-between items-start mb-1">
-            <span class="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded">
-              #${actsExp.length - index}
-            </span>
-            <span class="text-xs font-semibold text-gray-600">
-              📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
-            </span>
-          </div>
-          <p class="text-gray-900 font-medium mt-1">${act.descripcion_actuacion}</p>
-          ${act.archivo_nombre ? `
-            <p class="text-xs text-indigo-600 mt-1">📎 ${act.archivo_nombre}</p>
-          ` : ''}
-        </div>
-      `).join('');
-    }
-
-    function renderApp() {
-      const app = document.getElementById('app');
-      if (!app) return;
-
-      app.innerHTML = `
-        <div class="min-h-screen">
-          <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 py-6">
-              <div class="flex justify-between items-center">
-                <div>
-                  <h1 class="text-3xl font-bold">⚖️ Sistema de Cobranzas - Abogados</h1>
-                  <p class="text-indigo-200 mt-1">Municipalidad de Asunción</p>
-                </div>
-                <div class="text-right bg-white/10 px-4 py-2 rounded-lg">
-                  <p class="text-sm font-semibold">👤 ${usuarioActual}</p>
-                  <p class="text-xs text-indigo-200">Abogado</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="bg-white rounded-lg shadow-md p-2 flex gap-2">
-              <button onclick="cambiarVista('formulario')" 
-                class="flex-1 py-3 px-4 rounded-md font-semibold transition-all ${
-                  vistaActual === 'formulario' 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }">
-                📝 Registrar Actuación
-              </button>
-              <button onclick="cambiarVista('historial')" 
-                class="flex-1 py-3 px-4 rounded-md font-semibold transition-all ${
-                  vistaActual === 'historial' 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }">
-                📚 Mi Historial
-              </button>
-            </div>
-          </div>
-
-          <div class="max-w-7xl mx-auto px-4 py-6">
-            <div id="contenido"></div>
-          </div>
-        </div>
-      `;
-
-      if (vistaActual === 'formulario') {
-        renderFormulario();
-      } else {
-        renderHistorial();
-      }
-    }
-
-    function renderFormulario() {
-      document.getElementById('contenido').innerHTML = `
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Registrar Nueva Actuación</h2>
-          
-          <form id="formActuacion" class="space-y-5">
-            
-            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-              <label class="block text-sm font-semibold text-gray-700 mb-3">
-                ¿Es un expediente nuevo o agregás actuación a uno existente?
-              </label>
-              <div class="flex gap-4">
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="tipoRegistro" value="existente" checked
-                    onchange="cambiarTipoRegistro('existente')"
-                    class="w-4 h-4 text-indigo-600 mr-2">
-                  <span class="text-sm font-medium">Expediente Existente</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="tipoRegistro" value="nuevo"
-                    onchange="cambiarTipoRegistro('nuevo')"
-                    class="w-4 h-4 text-indigo-600 mr-2">
-                  <span class="text-sm font-medium">Expediente Nuevo</span>
-                </label>
-              </div>
-            </div>
-
-            <div id="camposExpedienteExistente" class="space-y-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Seleccionar Expediente <span class="text-red-500">*</span>
-                </label>
-                <select name="expedienteExistente" onchange="mostrarActuacionesExpediente(this.value)"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                  <option value="">-- Seleccione un expediente --</option>
-                  ${expedientesExistentes.map(exp => `
-                    <option value="${exp.id}">
-                      Expte ${exp.num_expediente}/${exp.anio} - ${exp.caratula}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-              
-              <!-- Resumen de actuaciones del expediente seleccionado -->
-              <div id="resumenActuaciones" style="display: none;" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 class="font-bold text-blue-900 mb-2 flex items-center gap-2">
-                  <span>📋</span>
-                  <span>Actuaciones registradas en este expediente:</span>
-                </h4>
-                <div id="listaActuaciones" class="space-y-2 max-h-60 overflow-y-auto"></div>
-              </div>
-            </div>
-
-            <div id="camposExpedienteNuevo" style="display: none;" class="space-y-4 bg-green-50 p-4 rounded-lg">
-              <h3 class="font-bold text-green-800">📂 Datos del Nuevo Expediente</h3>
-              
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    N° Expediente <span class="text-red-500">*</span>
-                  </label>
-                  <input type="text" name="numExpediente"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    Año <span class="text-red-500">*</span>
-                  </label>
-                  <input type="text" name="anio" value="${new Date().getFullYear()}"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Carátula <span class="text-red-500">*</span>
-                </label>
-                <input type="text" name="caratula"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Municipalidad c/ Contribuyente s/ Cobro">
-              </div>
-
-              <div class="bg-white p-4 rounded-lg border border-gray-200">
-                <label class="flex items-center cursor-pointer">
-                  <input type="checkbox" name="tieneMonto" checked
-                    onchange="document.getElementById('montoInputNuevo').style.display = this.checked ? 'block' : 'none'"
-                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded mr-3">
-                  <span class="text-sm font-semibold text-gray-700">El juicio tiene monto determinado</span>
-                </label>
-                <div id="montoInputNuevo" class="mt-3">
-                  <input type="number" name="monto" 
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Monto en Guaraníes (₲)">
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-purple-50 p-4 rounded-lg space-y-4">
-              <h3 class="font-bold text-purple-800">📝 Datos de la Actuación</h3>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Fecha de la Actuación <span class="text-red-500">*</span>
-                </label>
-                <input type="date" name="fechaActuacion" required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Descripción de la Actuación <span class="text-red-500">*</span>
-                </label>
-                <textarea name="descripcionActuacion" rows="4" required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Describa detalladamente la actuación realizada..."></textarea>
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  📎 Archivo de la Actuación
-                </label>
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-indigo-400 transition-colors text-center">
-                  <input type="file" name="archivo"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    class="w-full text-sm text-gray-600">
-                  <p class="text-xs text-gray-500 mt-2">📄 PDF, DOC, DOCX, JPG o PNG (máx. 10MB)</p>
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Observaciones
-                </label>
-                <textarea name="observaciones" rows="3"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Observaciones adicionales (opcional)..."></textarea>
-              </div>
-            </div>
-
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
-              <div class="flex items-start">
-                <span class="text-2xl mr-3">⚠️</span>
-                <div>
-                  <p class="text-sm font-semibold text-yellow-800">Importante</p>
-                  <p class="text-sm text-yellow-700 mt-1">
-                    Las actuaciones registradas no pueden ser eliminadas y quedarán en el historial permanente.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" id="btnGuardar"
-              class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-4 rounded-lg font-bold text-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-              ✅ Registrar Actuación
-            </button>
-          </form>
-        </div>
-      `;
-
-      // Conectar el evento submit
-      document.getElementById('formActuacion').addEventListener('submit', guardarActuacion);
-    }
-
-    function renderHistorial() {
-      document.getElementById('contenido').innerHTML = `
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📚 Mi Historial de Expedientes</h2>
-          
-          ${expedientes.length === 0 ? `
-            <div class="text-center py-12 text-gray-500">
-              <p class="text-xl">📭 No tenés expedientes registrados</p>
-              <p class="text-sm mt-2">Comenzá registrando tu primera actuación</p>
-            </div>
-          ` : `
-            <div class="space-y-6">
-              ${expedientes.map(exp => {
-                const actExp = actuaciones.filter(a => a.expediente_cobranza_id === exp.id)
-                  .sort((a, b) => new Date(b.fecha_actuacion) - new Date(a.fecha_actuacion));
-                
-                return `
-                  <div class="border-2 border-indigo-200 rounded-xl p-5 bg-gradient-to-r from-white to-indigo-50">
-                    <div class="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 class="text-xl font-bold text-gray-900">
-                          📂 Expte. ${exp.num_expediente}/${exp.anio}
-                        </h3>
-                        <p class="text-gray-700 font-semibold mt-1">${exp.caratula}</p>
-                        ${exp.tiene_monto && exp.monto > 0 ? `
-                          <p class="text-green-700 font-bold text-lg mt-2">
-                            💰 ₲ ${parseFloat(exp.monto).toLocaleString('es-PY')}
-                          </p>
-                        ` : ''}
-                      </div>
-                      <span class="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                        ${actExp.length} actuación${actExp.length !== 1 ? 'es' : ''}
-                      </span>
-                    </div>
-
-                    <div class="mt-4 border-t-2 border-indigo-200 pt-4">
-                      <h4 class="font-bold text-indigo-800 mb-3">📝 HISTORIAL DE ACTUACIONES:</h4>
-                      ${actExp.length === 0 ? `
-                        <p class="text-gray-500 text-sm italic">Sin actuaciones registradas</p>
-                      ` : `
-                        <div class="space-y-3">
-                          ${actExp.map((act, index) => `
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                              <div class="flex justify-between items-start mb-2">
-                                <span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded">
-                                  #${actExp.length - index}
-                                </span>
-                                <span class="text-sm font-semibold text-gray-600">
-                                  📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
-                                </span>
-                              </div>
-                              
-                              <p class="text-gray-900 font-medium mb-2">${act.descripcion_actuacion}</p>
-                              
-                              ${act.observaciones ? `
-                                <p class="text-sm text-gray-600 italic mb-2">
-                                  💭 ${act.observaciones}
-                                </p>
-                              ` : ''}
-                              
-                              ${act.archivo_nombre ? `
-                                <a href="${act.archivo_url}" target="_blank" rel="noopener noreferrer"
-                                  class="flex items-center gap-2 text-indigo-700 hover:text-indigo-900 font-semibold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded transition-colors">
-                                  <span class="text-lg">📎</span>
-                                  <span class="flex-1">${act.archivo_nombre}</span>
-                                  <span class="text-xs text-indigo-600">↗️</span>
-                                </a>
-                              ` : ''}
-                              
-                              <p class="text-xs text-gray-400 mt-2">
-                                Registrado: ${new Date(act.fecha_registro).toLocaleString('es-PY')}
-                              </p>
-                            </div>
-                          `).join('')}
-                        </div>
-                      `}
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          `}
-        </div>
-      `;
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(init, 200);
-      });
-    } else {
-      setTimeout(init, 200);
+    // Limpiar formulario
+    function limpiarFormulario() {
+      document.getElementById('actuacionForm').reset();
+      document.getElementById('expedienteExistente').disabled = false;
+      document.getElementById('camposNuevoExpediente').classList.add('hidden');
+      document.getElementById('historialExpediente').classList.add('hidden');
+      document.getElementById('fechaActuacion').valueAsDate = new Date();
     }
   </script>
 </body>
