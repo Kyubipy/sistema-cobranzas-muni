@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard TV - Cobranzas</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Dashboard TV - Sistema de Cobranzas</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      overflow: hidden;
-    }
     @keyframes slideIn {
       from {
         transform: translateY(-20px);
@@ -20,288 +17,237 @@
         opacity: 1;
       }
     }
-    .nueva-actuacion {
+    .slide-in {
       animation: slideIn 0.5s ease-out;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    .pulse-slow {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white">
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen overflow-hidden">
   
-  <div class="h-screen flex flex-col p-8">
-    
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-      <div>
-        <h1 class="text-5xl font-bold mb-2">⚖️ COBRANZAS - MUNICIPALIDAD DE ASUNCIÓN</h1>
-        <p class="text-2xl text-purple-300">Dashboard en Tiempo Real</p>
-      </div>
-      <div class="text-right">
-        <div id="reloj" class="text-4xl font-bold mb-2"></div>
-        <div id="fecha" class="text-xl text-purple-300"></div>
-        <div class="flex items-center gap-2 justify-end mt-2">
-          <div class="w-3 h-3 bg-green-400 rounded-full pulse-slow"></div>
-          <span class="text-sm text-green-300">Actualización automática</span>
+  <!-- Header -->
+  <div class="bg-black/30 backdrop-blur-sm border-b border-white/20">
+    <div class="container mx-auto px-8 py-6">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+            <span class="text-4xl">⚖️</span>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold text-white">Sistema de Cobranzas</h1>
+            <p class="text-purple-200">Municipalidad de Asunción - Actuaciones en Tiempo Real</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="fecha" class="text-2xl font-bold text-white"></div>
+          <div id="hora" class="text-xl text-purple-200"></div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Métricas Principales -->
-    <div class="grid grid-cols-4 gap-6 mb-8">
-      <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-6 shadow-2xl">
-        <div class="flex items-center justify-between mb-4">
+  <!-- Estadísticas -->
+  <div class="container mx-auto px-8 py-6">
+    <div class="grid grid-cols-4 gap-6 mb-6">
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-200 text-sm font-semibold mb-1">Total Expedientes</p>
+            <p id="totalExpedientes" class="text-5xl font-bold text-white">0</p>
+          </div>
           <span class="text-6xl">📂</span>
-          <div class="text-right">
-            <p class="text-lg opacity-90">EXPEDIENTES</p>
-            <p id="totalExpedientes" class="text-6xl font-bold">0</p>
-          </div>
         </div>
       </div>
 
-      <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-6 shadow-2xl">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-200 text-sm font-semibold mb-1">Actuaciones Hoy</p>
+            <p id="actuacionesHoy" class="text-5xl font-bold text-white">0</p>
+          </div>
           <span class="text-6xl">📝</span>
-          <div class="text-right">
-            <p class="text-lg opacity-90">ACTUACIONES</p>
-            <p id="totalActuaciones" class="text-6xl font-bold">0</p>
-            <p id="actuacionesHoy" class="text-sm opacity-75 mt-1">Hoy: 0</p>
-          </div>
         </div>
       </div>
 
-      <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-2xl">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-200 text-sm font-semibold mb-1">Esta Semana</p>
+            <p id="actuacionesSemana" class="text-5xl font-bold text-white">0</p>
+          </div>
+          <span class="text-6xl">📊</span>
+        </div>
+      </div>
+
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-200 text-sm font-semibold mb-1">Abogados Activos</p>
+            <p id="abogadosActivos" class="text-5xl font-bold text-white">0</p>
+          </div>
           <span class="text-6xl">👥</span>
-          <div class="text-right">
-            <p class="text-lg opacity-90">ABOGADOS</p>
-            <p id="totalAbogados" class="text-6xl font-bold">0</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 shadow-2xl">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-6xl">💰</span>
-          <div class="text-right">
-            <p class="text-lg opacity-90">MONTO TOTAL</p>
-            <p id="montoTotal" class="text-4xl font-bold">₲ 0</p>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- Contenido Principal -->
-    <div class="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
-      
-      <!-- Últimas Actuaciones -->
-      <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-2xl overflow-hidden flex flex-col">
-        <h2 class="text-3xl font-bold mb-4 flex items-center gap-3">
-          <span>🕐</span>
-          <span>ÚLTIMAS ACTUACIONES</span>
-        </h2>
-        <div id="ultimasActuaciones" class="flex-1 overflow-y-auto space-y-3 pr-2">
-          <!-- Se llena dinámicamente -->
-        </div>
+    <!-- Lista de actuaciones recientes -->
+    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+      <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+        <span>🔴</span> Actuaciones Recientes (Live)
+      </h2>
+      <div id="listaActuaciones" class="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
+        <p class="text-purple-200 text-center py-8">Cargando actuaciones...</p>
       </div>
-
-      <!-- Ranking de Abogados -->
-      <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-2xl overflow-hidden flex flex-col">
-        <h2 class="text-3xl font-bold mb-4 flex items-center gap-3">
-          <span>🏆</span>
-          <span>TOP ABOGADOS</span>
-        </h2>
-        <div id="rankingAbogados" class="flex-1 overflow-y-auto space-y-4">
-          <!-- Se llena dinámicamente -->
-        </div>
-      </div>
-
     </div>
-
   </div>
 
   <script>
     // Configuración de Supabase
-    const SUPABASE_URL = 'https://wyxrtqudbjbwwlmqlrbc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5eHJ0cXVkYmpid3dsbXFscmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTc2ODcsImV4cCI6MjA3Mzg3MzY4N30.vV0m-2D9Hod6t3CwW9ggFlgmMewlF0SaeuC2horX8fs';
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseUrl = 'https://nxdjnoctsuzuemxqkybf.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54ZGpub2N0c3V6dWVteHFreWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk3MjU0MDIsImV4cCI6MjA0NTMwMTQwMn0.9wre1y66Go2Z89sNM-wTSgeVB1-iiPN2gTFR5ctu30s';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    let expedientes = [];
-    let actuaciones = [];
-    let ultimasActuacionesIds = new Set();
-
-    // Actualizar reloj
-    function actualizarReloj() {
+    // Actualizar fecha y hora
+    function actualizarFechaHora() {
       const ahora = new Date();
-      const horas = ahora.getHours().toString().padStart(2, '0');
-      const minutos = ahora.getMinutes().toString().padStart(2, '0');
-      const segundos = ahora.getSeconds().toString().padStart(2, '0');
-      
-      document.getElementById('reloj').textContent = `${horas}:${minutos}:${segundos}`;
-      
-      const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-      
-      const fecha = `${dias[ahora.getDay()]}, ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
-      document.getElementById('fecha').textContent = fecha;
-    }
-
-    // Cargar datos
-    async function cargarDatos() {
-      try {
-        // Cargar expedientes
-        const { data: exps, error: expError } = await supabase
-          .from('expedientes_cobranzas')
-          .select('*')
-          .order('fecha_creacion', { ascending: false });
-        
-        if (expError) throw expError;
-        expedientes = exps || [];
-
-        // Cargar actuaciones
-        const { data: acts, error: actError } = await supabase
-          .from('actuaciones_cobranzas')
-          .select('*')
-          .order('fecha_registro', { ascending: false })
-          .limit(20);
-        
-        if (actError) throw actError;
-        
-        // Detectar nuevas actuaciones
-        const nuevasIds = new Set(acts.map(a => a.id));
-        const hayNuevas = acts.some(a => !ultimasActuacionesIds.has(a.id));
-        
-        actuaciones = acts || [];
-        ultimasActuacionesIds = nuevasIds;
-
-        actualizarDashboard(hayNuevas);
-      } catch (error) {
-        console.error('Error cargando datos:', error);
-      }
-    }
-
-    // Actualizar dashboard
-    function actualizarDashboard(hayNuevas = false) {
-      // Métricas
-      const totalExpedientes = expedientes.length;
-      const totalActuaciones = actuaciones.length;
-      const abogadosActivos = new Set(expedientes.map(e => e.abogado_responsable)).size;
-      const montoTotal = expedientes.filter(e => e.tiene_monto).reduce((sum, e) => sum + (parseFloat(e.monto) || 0), 0);
-      
-      // Actuaciones de hoy
-      const hoy = new Date().toDateString();
-      const actuacionesHoy = actuaciones.filter(a => new Date(a.fecha_actuacion).toDateString() === hoy);
-
-      document.getElementById('totalExpedientes').textContent = totalExpedientes;
-      document.getElementById('totalActuaciones').textContent = totalActuaciones;
-      document.getElementById('actuacionesHoy').textContent = `Hoy: ${actuacionesHoy.length}`;
-      document.getElementById('totalAbogados').textContent = abogadosActivos;
-      document.getElementById('montoTotal').textContent = `₲ ${montoTotal.toLocaleString('es-PY')}`;
-
-      // Últimas actuaciones
-      const ultimasDiv = document.getElementById('ultimasActuaciones');
-      ultimasDiv.innerHTML = actuaciones.slice(0, 10).map((act, index) => {
-        const expediente = expedientes.find(e => e.id === act.expediente_cobranza_id);
-        const tiempo = calcularTiempoTranscurrido(act.fecha_registro);
-        const esNueva = index === 0 && hayNuevas;
-        
-        return `
-          <div class="${esNueva ? 'nueva-actuacion' : ''} bg-gradient-to-r from-indigo-600/80 to-purple-600/80 rounded-xl p-4 backdrop-blur border border-white/20">
-            <div class="flex justify-between items-start mb-2">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">📝</span>
-                <span class="font-bold text-xl">${act.abogado}</span>
-              </div>
-              <span class="text-sm bg-white/20 px-2 py-1 rounded">${tiempo}</span>
-            </div>
-            ${expediente ? `
-              <p class="text-lg font-semibold mb-1">📂 Expte. ${expediente.num_expediente}/${expediente.anio}</p>
-            ` : ''}
-            <p class="text-sm opacity-90">${act.descripcion_actuacion}</p>
-          </div>
-        `;
-      }).join('');
-
-      // Ranking de abogados
-      const porAbogado = {};
-      expedientes.forEach(exp => {
-        porAbogado[exp.abogado_responsable] = (porAbogado[exp.abogado_responsable] || 0) + 1;
-      });
-      
-      const topAbogados = Object.entries(porAbogado)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8);
-
-      const rankingDiv = document.getElementById('rankingAbogados');
-      const medallas = ['🥇', '🥈', '🥉'];
-      const colores = [
-        'from-yellow-400 to-yellow-600',
-        'from-gray-300 to-gray-500',
-        'from-orange-400 to-orange-600',
-        'from-blue-400 to-blue-600',
-        'from-green-400 to-green-600',
-        'from-purple-400 to-purple-600',
-        'from-pink-400 to-pink-600',
-        'from-red-400 to-red-600'
-      ];
-
-      rankingDiv.innerHTML = topAbogados.map(([abogado, count], index) => `
-        <div class="bg-gradient-to-r ${colores[index]} rounded-xl p-4 shadow-lg">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-4xl">${medallas[index] || '🏅'}</span>
-              <div>
-                <p class="font-bold text-xl">${abogado}</p>
-                <p class="text-sm opacity-90">${count} expediente${count !== 1 ? 's' : ''}</p>
-              </div>
-            </div>
-            <span class="text-5xl font-bold">${count}</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function calcularTiempoTranscurrido(fecha) {
-      const ahora = new Date();
-      const registro = new Date(fecha);
-      const diff = ahora - registro;
-      
-      const minutos = Math.floor(diff / 60000);
-      const horas = Math.floor(minutos / 60);
-      const dias = Math.floor(horas / 24);
-      
-      if (dias > 0) return `hace ${dias}d`;
-      if (horas > 0) return `hace ${horas}h`;
-      if (minutos > 0) return `hace ${minutos}m`;
-      return 'ahora';
+      const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('fecha').textContent = ahora.toLocaleDateString('es-PY', opciones);
+      document.getElementById('hora').textContent = ahora.toLocaleTimeString('es-PY');
     }
 
     // Inicializar
-    actualizarReloj();
-    setInterval(actualizarReloj, 1000);
+    window.addEventListener('DOMContentLoaded', () => {
+      actualizarFechaHora();
+      setInterval(actualizarFechaHora, 1000);
+      cargarDatos();
+      suscribirCambios();
+    });
 
-    cargarDatos();
-    setInterval(cargarDatos, 30000); // Actualizar cada 30 segundos
+    // Cargar estadísticas y actuaciones
+    async function cargarDatos() {
+      try {
+        // Cargar expedientes totales
+        const { count: countExpedientes, error: errorExp } = await supabase
+          .from('expedientes_cobranzas')
+          .select('*', { count: 'exact', head: true });
 
-    // Suscripción en tiempo real para actualizaciones instantáneas
-    supabase
-      .channel('tv_dashboard')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'expedientes_cobranzas' },
-        () => cargarDatos()
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'actuaciones_cobranzas' },
-        () => cargarDatos()
-      )
-      .subscribe();
+        if (errorExp) throw errorExp;
+        document.getElementById('totalExpedientes').textContent = countExpedientes || 0;
+
+        // Cargar actuaciones de hoy
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const { count: countHoy, error: errorHoy } = await supabase
+          .from('actuaciones_cobranzas')
+          .select('*', { count: 'exact', head: true })
+          .gte('fecha_actuacion', hoy.toISOString());
+
+        if (errorHoy) throw errorHoy;
+        document.getElementById('actuacionesHoy').textContent = countHoy || 0;
+
+        // Cargar actuaciones de esta semana
+        const inicioSemana = new Date();
+        inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+        inicioSemana.setHours(0, 0, 0, 0);
+        
+        const { count: countSemana, error: errorSemana } = await supabase
+          .from('actuaciones_cobranzas')
+          .select('*', { count: 'exact', head: true })
+          .gte('fecha_actuacion', inicioSemana.toISOString());
+
+        if (errorSemana) throw errorSemana;
+        document.getElementById('actuacionesSemana').textContent = countSemana || 0;
+
+        // Cargar actuaciones recientes
+        const { data: actuaciones, error: errorAct } = await supabase
+          .from('actuaciones_cobranzas')
+          .select(`
+            *,
+            expedientes_cobranzas (numero_expediente, descripcion_caso)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (errorAct) throw errorAct;
+
+        // Contar abogados únicos
+        const abogadosUnicos = new Set(actuaciones.map(act => act.abogado));
+        document.getElementById('abogadosActivos').textContent = abogadosUnicos.size;
+
+        // Mostrar actuaciones
+        mostrarActuaciones(actuaciones);
+
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      }
+    }
+
+    // Mostrar actuaciones
+    function mostrarActuaciones(actuaciones) {
+      const lista = document.getElementById('listaActuaciones');
+      
+      if (actuaciones.length === 0) {
+        lista.innerHTML = '<p class="text-purple-200 text-center py-8">No hay actuaciones registradas aún</p>';
+        return;
+      }
+
+      lista.innerHTML = actuaciones.map((act, index) => {
+        const esNuevo = index === 0; // Primera actuación es la más reciente
+        const fecha = new Date(act.fecha_actuacion);
+        const creado = new Date(act.created_at);
+        const esHoy = fecha.toDateString() === new Date().toDateString();
+        
+        return `
+          <div class="bg-white/20 backdrop-blur-sm border-l-4 ${esNuevo ? 'border-green-400' : 'border-purple-400'} rounded-r-xl p-4 ${esNuevo ? 'slide-in' : ''}">
+            <div class="flex justify-between items-start gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  ${esNuevo ? '<span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">NUEVO</span>' : ''}
+                  <span class="font-bold text-xl text-white">${act.expedientes_cobranzas.numero_expediente}</span>
+                  <span class="text-purple-200">${fecha.toLocaleDateString()}</span>
+                  ${esHoy ? '<span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">HOY</span>' : ''}
+                </div>
+                <div class="text-purple-100 mb-2">${act.expedientes_cobranzas.descripcion_caso}</div>
+                <div class="flex items-center gap-3">
+                  <span class="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">${act.tipo_actuacion}</span>
+                  <span class="text-white font-medium">👨‍⚖️ ${act.abogado}</span>
+                </div>
+                <div class="text-purple-200 mt-2 text-sm">${act.descripcion}</div>
+              </div>
+              <div class="text-right text-purple-200 text-sm">
+                <div>${creado.toLocaleDateString()}</div>
+                <div class="font-mono">${creado.toLocaleTimeString()}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Suscribirse a cambios en tiempo real
+    function suscribirCambios() {
+      supabase
+        .channel('cambios-dashboard')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'actuaciones_cobranzas' },
+          (payload) => {
+            console.log('Cambio detectado:', payload);
+            cargarDatos();
+          }
+        )
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'expedientes_cobranzas' },
+          (payload) => {
+            console.log('Cambio en expedientes:', payload);
+            cargarDatos();
+          }
+        )
+        .subscribe();
+    }
+
+    // Recargar datos cada 30 segundos (por si acaso)
+    setInterval(() => {
+      cargarDatos();
+    }, 30000);
   </script>
-
 </body>
 </html>
