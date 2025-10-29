@@ -257,7 +257,7 @@
       }
     }
 
-    // Cargar datos del abogado
+    // Cargar datos del abogado - VERSIÓN CORREGIDA
     async function cargarDatos() {
       try {
         // Cargar expedientes del abogado
@@ -269,18 +269,37 @@
 
         if (errorExp) throw errorExp;
 
-        // Cargar actuaciones del abogado
-        const { data: actuaciones, error: errorAct } = await supabase
+        // Cargar actuaciones del abogado SIN la relación compleja
+        const { data: actuacionesRaw, error: errorAct } = await supabase
           .from('actuaciones_cobranzas')
-          .select(`
-            *,
-            expedientes_cobranzas (numero_expediente, descripcion_caso)
-          `)
+          .select('*')
           .eq('abogado', usuarioActual.nombre_completo)
           .order('fecha_actuacion', { ascending: false })
           .limit(20);
 
         if (errorAct) throw errorAct;
+
+        // Si hay actuaciones, cargar los datos de los expedientes asociados
+        let actuaciones = [];
+        if (actuacionesRaw && actuacionesRaw.length > 0) {
+          const expedientesIds = [...new Set(actuacionesRaw.map(act => act.expediente_id))];
+          
+          const { data: expedientesActuaciones, error: errorExpAct } = await supabase
+            .from('expedientes_cobranzas')
+            .select('id, numero_expediente, descripcion_caso')
+            .in('id', expedientesIds);
+
+          if (errorExpAct) throw errorExpAct;
+
+          // Combinar datos
+          actuaciones = actuacionesRaw.map(act => {
+            const expediente = expedientesActuaciones.find(exp => exp.id === act.expediente_id);
+            return {
+              ...act,
+              expedientes_cobranzas: expediente || { numero_expediente: 'N/A', descripcion_caso: 'N/A' }
+            };
+          });
+        }
 
         // Actualizar estadísticas
         document.getElementById('misExpedientes').textContent = expedientes.length;
@@ -297,7 +316,8 @@
 
       } catch (error) {
         console.error('Error al cargar datos:', error);
-        alert('Error al cargar datos: ' + error.message);
+        document.getElementById('listaExpedientes').innerHTML = '<p class="text-red-500 text-center py-8">Error al cargar expedientes: ' + error.message + '</p>';
+        document.getElementById('listaActuaciones').innerHTML = '<p class="text-red-500 text-center py-8">Error al cargar actuaciones: ' + error.message + '</p>';
       }
     }
 
@@ -425,10 +445,12 @@
         alert('✅ Expediente registrado exitosamente');
         cerrarModalExpediente();
         cargarDatos();
+        cargarExpedientesParaActuacion();
 
       } catch (error) {
         errorDiv.textContent = '⚠️ ' + error.message;
         errorDiv.classList.remove('hidden');
+      } finally {
         boton.disabled = false;
         boton.innerHTML = textoOriginal;
         procesandoExpediente = false;
@@ -470,6 +492,7 @@
         });
 
         // Al cambiar expediente, mostrar historia
+        select.removeEventListener('change', mostrarHistoriaExpediente);
         select.addEventListener('change', mostrarHistoriaExpediente);
 
       } catch (error) {
@@ -588,6 +611,7 @@
       } catch (error) {
         errorDiv.textContent = '⚠️ ' + error.message;
         errorDiv.classList.remove('hidden');
+      } finally {
         boton.disabled = false;
         boton.innerHTML = textoOriginal;
         procesandoActuacion = false;
