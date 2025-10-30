@@ -6,32 +6,9 @@
   <title>Panel del Jefe - Cobranzas</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-100">
-  
-  <!-- Header con usuario y cerrar sesión -->
-  <div class="bg-gradient-to-r from-purple-700 to-purple-900 text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 py-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold">👔 Panel del Jefe de Cobranzas</h1>
-          <p class="text-purple-200 mt-1">Municipalidad de Asunción - Reporte en Tiempo Real</p>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="text-right bg-white/10 px-4 py-2 rounded-lg">
-            <p class="text-sm font-semibold">👤 <span id="nombreUsuarioHeader"></span></p>
-            <p class="text-xs text-purple-200">Jefe de Cobranzas</p>
-          </div>
-          <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
-            <span>🚪</span>
-            <span class="hidden sm:inline">Salir</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="app">
     <div class="min-h-screen flex items-center justify-center">
       <div class="text-center">
@@ -55,15 +32,6 @@
     let filtroAbogado = 'Todos';
     let filtroTexto = '';
     let cargando = true;
-    let usuarioActual = null;
-
-    // Función para cerrar sesión
-    function cerrarSesion() {
-      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
-        localStorage.removeItem('usuarioActual');
-        window.location.href = 'index.html';
-      }
-    }
 
     // Inicializar
     async function init() {
@@ -76,18 +44,15 @@
         return;
       }
 
-      usuarioActual = JSON.parse(usuarioGuardado);
+      const usuarioActual = JSON.parse(usuarioGuardado);
       
       // Verificar que sea jefe
       if (usuarioActual.rol !== 'jefe') {
-        alert('Acceso no autorizado. Esta sección es solo para supervisores.');
+        alert('Acceso no autorizado');
         localStorage.removeItem('usuarioActual');
         window.location.href = 'index.html';
         return;
       }
-
-      // Mostrar nombre en header
-      document.getElementById('nombreUsuarioHeader').textContent = usuarioActual.nombre_completo;
 
       try {
         await cargarTodosDatos();
@@ -183,6 +148,13 @@
         });
     }
 
+    function cerrarSesion() {
+      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
+        localStorage.removeItem('usuarioActual');
+        window.location.href = 'index.html';
+      }
+    }
+
     function filtrarAbogado(abogado) {
       filtroAbogado = abogado;
       renderReporte();
@@ -196,6 +168,149 @@
       }
     }
 
+    function exportarExcel() {
+      try {
+        const wb = XLSX.utils.book_new();
+        
+        // Filtrar expedientes según filtros actuales
+        let expedientesFiltrados = expedientes;
+        
+        if (filtroAbogado !== 'Todos') {
+          expedientesFiltrados = expedientesFiltrados.filter(e => e.abogado_responsable === filtroAbogado);
+        }
+
+        if (filtroTexto) {
+          expedientesFiltrados = expedientesFiltrados.filter(e => 
+            e.num_expediente.toLowerCase().includes(filtroTexto) ||
+            e.caratula.toLowerCase().includes(filtroTexto) ||
+            e.anio.includes(filtroTexto)
+          );
+        }
+
+        // Agrupar por abogado
+        const porAbogado = {};
+        expedientesFiltrados.forEach(exp => {
+          if (!porAbogado[exp.abogado_responsable]) {
+            porAbogado[exp.abogado_responsable] = [];
+          }
+          porAbogado[exp.abogado_responsable].push(exp);
+        });
+
+        // Crear hoja por cada abogado
+        Object.keys(porAbogado).forEach(abogado => {
+          const expsAbogado = porAbogado[abogado];
+          const datos = [];
+
+          expsAbogado.forEach(exp => {
+            const actExp = actuaciones.filter(a => a.expediente_cobranza_id === exp.id)
+              .sort((a, b) => new Date(b.fecha_actuacion) - new Date(a.fecha_actuacion));
+
+            // Fila del expediente
+            datos.push({
+              'EXPEDIENTE': `${exp.num_expediente}/${exp.anio}`,
+              'CARÁTULA': exp.caratula,
+              'JUZGADO': exp.juzgado || '',
+              'TURNO': exp.turno || '',
+              'SECRETARÍA': exp.secretaria || '',
+              'MONTO': exp.tiene_monto && exp.monto > 0 ? `₲ ${parseFloat(exp.monto).toLocaleString('es-PY')}` : '',
+              'FECHA CREACIÓN': new Date(exp.fecha_creacion).toLocaleDateString('es-PY'),
+              'ACTUACIONES': actExp.length,
+              'TIPO': 'EXPEDIENTE',
+              'FECHA ACTUACIÓN': '',
+              'DESCRIPCIÓN': '',
+              'OBSERVACIONES': '',
+              'ARCHIVO': ''
+            });
+
+            // Filas de actuaciones
+            actExp.forEach((act, index) => {
+              datos.push({
+                'EXPEDIENTE': '',
+                'CARÁTULA': '',
+                'JUZGADO': '',
+                'TURNO': '',
+                'SECRETARÍA': '',
+                'MONTO': '',
+                'FECHA CREACIÓN': '',
+                'ACTUACIONES': `#${actExp.length - index}`,
+                'TIPO': 'ACTUACIÓN',
+                'FECHA ACTUACIÓN': new Date(act.fecha_actuacion).toLocaleDateString('es-PY'),
+                'DESCRIPCIÓN': act.descripcion_actuacion,
+                'OBSERVACIONES': act.observaciones || '',
+                'ARCHIVO': act.archivo_nombre && act.archivo_url ? 
+                  { text: act.archivo_nombre, hyperlink: act.archivo_url } : 
+                  ''
+              });
+            });
+
+            // Línea vacía entre expedientes
+            datos.push({
+              'EXPEDIENTE': '',
+              'CARÁTULA': '',
+              'JUZGADO': '',
+              'TURNO': '',
+              'SECRETARÍA': '',
+              'MONTO': '',
+              'FECHA CREACIÓN': '',
+              'ACTUACIONES': '',
+              'TIPO': '',
+              'FECHA ACTUACIÓN': '',
+              'DESCRIPCIÓN': '',
+              'OBSERVACIONES': '',
+              'ARCHIVO': ''
+            });
+          });
+
+          const ws = XLSX.utils.json_to_sheet(datos);
+          
+          // Convertir URLs en hyperlinks clickeables
+          const range = XLSX.utils.decode_range(ws['!ref']);
+          for (let R = range.s.r; R <= range.e.r; ++R) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: 12 }); // Columna ARCHIVO (índice 12)
+            const cell = ws[cellAddress];
+            
+            if (cell && cell.v && typeof cell.v === 'object' && cell.v.hyperlink) {
+              // Crear hyperlink en Excel
+              cell.l = { Target: cell.v.hyperlink, Tooltip: "Click para abrir archivo" };
+              cell.v = cell.v.text;
+              cell.t = 's';
+              
+              // Estilo azul y subrayado para el link
+              if (!cell.s) cell.s = {};
+              cell.s.font = { color: { rgb: "0563C1" }, underline: true };
+            }
+          }
+          
+          // Ajustar anchos de columnas
+          ws['!cols'] = [
+            { wch: 15 },  // EXPEDIENTE
+            { wch: 40 },  // CARÁTULA
+            { wch: 25 },  // JUZGADO
+            { wch: 10 },  // TURNO
+            { wch: 15 },  // SECRETARÍA
+            { wch: 15 },  // MONTO
+            { wch: 12 },  // FECHA CREACIÓN
+            { wch: 10 },  // ACTUACIONES
+            { wch: 12 },  // TIPO
+            { wch: 15 },  // FECHA ACTUACIÓN
+            { wch: 50 },  // DESCRIPCIÓN
+            { wch: 30 },  // OBSERVACIONES
+            { wch: 30 }   // ARCHIVO (clickeable)
+          ];
+
+          XLSX.utils.book_append_sheet(wb, ws, abogado.substring(0, 31));
+        });
+
+        // Descargar
+        const fecha = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, `Reporte_Cobranzas_${fecha}.xlsx`);
+        
+      } catch (error) {
+        console.error('Error exportando:', error);
+        alert('Error al exportar a Excel: ' + error.message);
+      }
+    }
+
     function renderApp() {
       console.log('Renderizando app...');
       const app = document.getElementById('app');
@@ -204,8 +319,33 @@
         return;
       }
 
+      const usuarioGuardado = localStorage.getItem('usuarioActual');
+      const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : { nombre_completo: 'Jefe' };
+
       app.innerHTML = `
         <div class="min-h-screen">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-purple-700 to-purple-900 text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h1 class="text-3xl font-bold">👔 Panel del Jefe de Cobranzas</h1>
+                  <p class="text-purple-200 mt-1">Municipalidad de Asunción - Reporte en Tiempo Real</p>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="text-right bg-white/10 px-4 py-2 rounded-lg">
+                    <p class="text-sm font-semibold">👤 ${usuario.nombre_completo}</p>
+                    <p class="text-xs text-purple-200">Supervisor</p>
+                  </div>
+                  <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition">
+                    <span>🚪</span>
+                    <span class="hidden sm:inline">Salir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Contenido -->
           <div class="max-w-7xl mx-auto px-4 py-6">
             <div id="contenido"></div>
@@ -274,7 +414,7 @@
           
           <!-- Filtros y búsqueda -->
           <div class="bg-white rounded-xl shadow-lg p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">🔍 Buscar:</label>
                 <input type="text" id="busqueda" 
@@ -294,16 +434,12 @@
                   `).join('')}
                 </select>
               </div>
-            </div>
-            
-            <!-- Botones de exportación -->
-            <div class="flex gap-3">
-              <button onclick="exportarExcel()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
-                <span>📊</span> Exportar a Excel
-              </button>
-              <button onclick="exportarCSV()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                <span>📥</span> Exportar CSV
-              </button>
+              <div class="flex items-end">
+                <button onclick="exportarExcel()" 
+                  class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
+                  📊 Exportar a Excel
+                </button>
+              </div>
             </div>
           </div>
 
@@ -383,7 +519,16 @@
                                   📂 Expte. ${exp.num_expediente}/${exp.anio}
                                 </h3>
                               </div>
-                              <p class="text-gray-700 font-semibold text-lg">${exp.caratula}</p>
+                              <p class="text-gray-700 font-semibold text-lg mb-2">${exp.caratula}</p>
+                              
+                              ${exp.juzgado || exp.turno || exp.secretaria ? `
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                  ${exp.juzgado ? `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">🏛️ ${exp.juzgado}</span>` : ''}
+                                  ${exp.turno ? `<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">🔄 ${exp.turno}</span>` : ''}
+                                  ${exp.secretaria ? `<span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">📋 ${exp.secretaria}</span>` : ''}
+                                </div>
+                              ` : ''}
+                              
                               ${exp.tiene_monto && exp.monto > 0 ? `
                                 <p class="text-green-700 font-bold text-xl mt-2">
                                   💰 Monto: ₲ ${parseFloat(exp.monto).toLocaleString('es-PY')}
@@ -446,7 +591,7 @@
                                     <!-- Archivo -->
                                     ${act.archivo_nombre ? `
                                       <div class="flex items-center gap-2 bg-indigo-50 p-3 rounded">
-                                        <span class="text-xl">🔎</span>
+                                        <span class="text-xl">📎</span>
                                         <a href="${act.archivo_url}" target="_blank" rel="noopener noreferrer"
                                           class="flex-1 text-indigo-700 hover:text-indigo-900 font-semibold text-sm hover:underline">
                                           ${act.archivo_nombre}
@@ -475,186 +620,6 @@
 
         </div>
       `;
-    }
-
-    // Exportar a Excel por abogado con actuaciones completas
-    async function exportarExcel() {
-      try {
-        // Crear un objeto para agrupar por abogado
-        const datosPorAbogado = {};
-
-        // Agrupar expedientes por abogado
-        expedientes.forEach(exp => {
-          const abogado = exp.abogado_responsable;
-          if (!datosPorAbogado[abogado]) {
-            datosPorAbogado[abogado] = {
-              expedientes: [],
-              actuaciones: []
-            };
-          }
-          datosPorAbogado[abogado].expedientes.push(exp);
-        });
-
-        // Agrupar actuaciones por abogado
-        actuaciones.forEach(act => {
-          const abogado = act.abogado;
-          if (!datosPorAbogado[abogado]) {
-            datosPorAbogado[abogado] = {
-              expedientes: [],
-              actuaciones: []
-            };
-          }
-          datosPorAbogado[abogado].actuaciones.push(act);
-        });
-
-        // Crear workbook
-        const wb = XLSX.utils.book_new();
-
-        // Crear hoja de resumen
-        const resumenData = [];
-        resumenData.push(['RESUMEN GENERAL - SISTEMA DE COBRANZAS']);
-        resumenData.push(['Municipalidad de Asunción']);
-        resumenData.push(['Fecha de Reporte:', new Date().toLocaleDateString()]);
-        resumenData.push([]);
-        resumenData.push(['Abogado', 'Total Expedientes', 'Total Actuaciones', 'Monto Total (Gs.)']);
-
-        Object.keys(datosPorAbogado).sort().forEach(abogado => {
-          const datos = datosPorAbogado[abogado];
-          const montoTotal = datos.expedientes
-            .filter(e => e.tiene_monto)
-            .reduce((sum, exp) => sum + (parseFloat(exp.monto) || 0), 0);
-          resumenData.push([
-            abogado,
-            datos.expedientes.length,
-            datos.actuaciones.length,
-            montoTotal
-          ]);
-        });
-
-        const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
-        XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-
-        // Crear una hoja por cada abogado
-        Object.keys(datosPorAbogado).sort().forEach(abogado => {
-          const datos = datosPorAbogado[abogado];
-          const sheetData = [];
-
-          sheetData.push([`ABOGADO: ${abogado}`]);
-          sheetData.push([]);
-
-          // Sección de Expedientes
-          sheetData.push(['EXPEDIENTES']);
-          sheetData.push(['Número', 'Año', 'Carátula', 'Área', 'Tiene Monto', 'Monto (Gs.)', 'Fecha Creación']);
-          
-          datos.expedientes.forEach(exp => {
-            sheetData.push([
-              exp.num_expediente,
-              exp.anio,
-              exp.caratula,
-              exp.area || 'N/A',
-              exp.tiene_monto ? 'Sí' : 'No',
-              exp.tiene_monto ? exp.monto : 0,
-              new Date(exp.fecha_creacion).toLocaleDateString()
-            ]);
-          });
-
-          sheetData.push([]);
-          sheetData.push([]);
-
-          // Sección de Actuaciones
-          sheetData.push(['ACTUACIONES DETALLADAS']);
-          sheetData.push(['Expediente', 'Año', 'Fecha Actuación', 'Descripción', 'Observaciones', 'Tiene Archivo', 'Fecha Registro']);
-          
-          datos.actuaciones.forEach(act => {
-            // Buscar expediente relacionado
-            const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
-            sheetData.push([
-              exp ? exp.num_expediente : 'N/A',
-              exp ? exp.anio : 'N/A',
-              new Date(act.fecha_actuacion).toLocaleDateString(),
-              act.descripcion_actuacion,
-              act.observaciones || '',
-              act.archivo_url ? 'Sí' : 'No',
-              new Date(act.fecha_registro).toLocaleString()
-            ]);
-          });
-
-          // Nombre de la hoja (máximo 31 caracteres)
-          let nombreHoja = abogado.substring(0, 31);
-          const ws = XLSX.utils.aoa_to_sheet(sheetData);
-          XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
-        });
-
-        // Crear hoja con todas las actuaciones detalladas
-        const todasActuaciones = [];
-        todasActuaciones.push(['TODAS LAS ACTUACIONES']);
-        todasActuaciones.push(['Abogado', 'Expediente', 'Año', 'Carátula', 'Fecha Actuación', 'Descripción', 'Observaciones', 'Área', 'Monto (Gs.)', 'Archivo']);
-
-        actuaciones.forEach(act => {
-          const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
-          todasActuaciones.push([
-            act.abogado,
-            exp ? exp.num_expediente : 'N/A',
-            exp ? exp.anio : 'N/A',
-            exp ? exp.caratula : 'N/A',
-            new Date(act.fecha_actuacion).toLocaleDateString(),
-            act.descripcion_actuacion,
-            act.observaciones || '',
-            exp ? exp.area : 'N/A',
-            exp && exp.tiene_monto ? exp.monto : 0,
-            act.archivo_url ? 'Sí' : 'No'
-          ]);
-        });
-
-        const wsTodasActuaciones = XLSX.utils.aoa_to_sheet(todasActuaciones);
-        XLSX.utils.book_append_sheet(wb, wsTodasActuaciones, 'Todas las Actuaciones');
-
-        // Descargar archivo
-        const fecha = new Date().toISOString().split('T')[0];
-        XLSX.writeFile(wb, `Reporte_Cobranzas_Completo_${fecha}.xlsx`);
-
-        alert('✅ Archivo Excel generado exitosamente');
-
-      } catch (error) {
-        console.error('Error al exportar Excel:', error);
-        alert('❌ Error al exportar a Excel: ' + error.message);
-      }
-    }
-
-    // Exportar CSV (función original)
-    async function exportarCSV() {
-      try {
-        // Convertir a CSV
-        const csv = [
-          ['Abogado', 'Expediente', 'Año', 'Carátula', 'Fecha Actuación', 'Tipo', 'Descripción', 'Monto'].join(','),
-          ...actuaciones.map(act => {
-            const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
-            return [
-              act.abogado,
-              exp ? exp.num_expediente : 'N/A',
-              exp ? exp.anio : 'N/A',
-              exp ? exp.caratula.replace(/,/g, ';') : 'N/A',
-              act.fecha_actuacion,
-              act.tipo_actuacion || 'General',
-              act.descripcion_actuacion.replace(/,/g, ';'),
-              exp && exp.tiene_monto ? exp.monto : 0
-            ].join(',');
-          })
-        ].join('\n');
-
-        // Descargar
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `reporte_cobranzas_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        
-        alert('✅ Archivo CSV exportado exitosamente');
-      } catch (error) {
-        console.error('Error al exportar CSV:', error);
-        alert('❌ Error al exportar datos: ' + error.message);
-      }
     }
 
     // Esperar a que el DOM esté completamente cargado
