@@ -104,8 +104,8 @@
           <label class="block text-gray-700 font-semibold mb-2">Tipo de Abogado</label>
           <select id="filtroTipo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="">Todos</option>
-            <option value="Interno">🟢 Solo Internos</option>
-            <option value="Externo">🟠 Solo Externos</option>
+            <option value="Interno">🏢 Solo Internos</option>
+            <option value="Externo">🏠 Solo Externos</option>
           </select>
         </div>
         <div>
@@ -320,9 +320,9 @@
     function getBadgeTipo(abogado) {
       const area = abogadosConArea[abogado];
       if (area === 'Interno') {
-        return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">🟢 INTERNO</span>';
+        return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">🏢 INTERNO</span>';
       } else if (area === 'Externo') {
-        return '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">🟠 EXTERNO</span>';
+        return '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">🏠 EXTERNO</span>';
       }
       return '';
     }
@@ -382,7 +382,7 @@
           <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span>📊</span> Actuaciones de ${filtroAbogado}
+                <span>📚</span> Actuaciones de ${filtroAbogado}
               </h2>
               <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
                 <span>📥</span> Exportar a Excel
@@ -437,7 +437,7 @@
       return abogados.map((abogado, idxAbogado) => {
         const data = porAbogado[abogado];
         const tipo = abogadosConArea[abogado];
-        const badgeTipo = tipo === 'Interno' ? '🟢 INTERNO' : tipo === 'Externo' ? '🟠 EXTERNO' : '';
+        const badgeTipo = tipo === 'Interno' ? '🏢 INTERNO' : tipo === 'Externo' ? '🏠 EXTERNO' : '';
         
         return `
           <div class="border-2 border-indigo-200 rounded-xl overflow-hidden">
@@ -445,7 +445,7 @@
                  onclick="toggleAbogado(${idxAbogado})">
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                  <span class="text-3xl">👨</span>
+                  <span class="text-3xl">👤</span>
                   <div>
                     <h3 class="text-xl font-bold text-gray-900">${abogado}</h3>
                     <span class="text-sm ${tipo === 'Interno' ? 'text-green-700' : 'text-orange-700'} font-semibold">${badgeTipo}</span>
