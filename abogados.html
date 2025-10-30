@@ -8,29 +8,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-  
-  <!-- Header con usuario y cerrar sesión -->
-  <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 py-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold">⚖️ Sistema de Cobranzas - Abogados</h1>
-          <p class="text-indigo-200 mt-1">Municipalidad de Asunción</p>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="text-right bg-white/10 px-4 py-2 rounded-lg">
-            <p class="text-sm font-semibold">👤 <span id="nombreUsuarioHeader"></span></p>
-            <p class="text-xs text-indigo-200">Abogado</p>
-          </div>
-          <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
-            <span>🚪</span>
-            <span class="hidden sm:inline">Salir</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="app">
     <div class="min-h-screen flex items-center justify-center">
       <div class="text-center">
@@ -56,14 +33,6 @@
     let expedientesExistentes = [];
     let guardando = false;
 
-    // Función para cerrar sesión
-    function cerrarSesion() {
-      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
-        localStorage.removeItem('usuarioActual');
-        window.location.href = 'index.html';
-      }
-    }
-
     async function init() {
       console.log('Iniciando aplicación...');
       
@@ -76,21 +45,24 @@
 
       usuarioActual = JSON.parse(usuarioGuardado);
       
-      // Verificar que sea abogado (CORRECCIÓN CRÍTICA)
-      if (usuarioActual.rol !== 'abogado') {
-        alert('Acceso no autorizado. Esta sección es solo para abogados.');
-        localStorage.removeItem('usuarioActual');
-        window.location.href = 'index.html';
+      // Si es jefe, redirigir
+      if (usuarioActual.rol === 'jefe') {
+        window.location.href = 'jefe.html';
         return;
       }
-
-      // Mostrar nombre en header
-      document.getElementById('nombreUsuarioHeader').textContent = usuarioActual.nombre_completo;
 
       await cargarExpedientesExistentes();
       await cargarMisExpedientes();
       renderApp();
       suscribirTiempoReal();
+    }
+
+    // Función para cerrar sesión
+    function cerrarSesion() {
+      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
+        localStorage.removeItem('usuarioActual');
+        window.location.href = 'index.html';
+      }
     }
 
     async function cargarExpedientesExistentes() {
@@ -99,7 +71,7 @@
           .from('expedientes_cobranzas')
           .select('id, num_expediente, anio, caratula')
           .eq('abogado_responsable', usuarioActual.nombre_completo)
-          .order('fecha_creacion', { ascending: false });
+          .order('created_at', { ascending: false });
         
         if (error) throw error;
         expedientesExistentes = data || [];
@@ -234,18 +206,12 @@
         if (tipoRegistro === 'nuevo') {
           if (!formData.get('numExpediente') || !formData.get('caratula')) {
             alert('Complete número de expediente y carátula');
-            guardando = false;
-            boton.disabled = false;
-            boton.innerHTML = textoOriginal;
             return;
           }
 
           const tieneMonto = formData.get('tieneMonto') === 'on';
           if (tieneMonto && !formData.get('monto')) {
             alert('Ingrese el monto del juicio');
-            guardando = false;
-            boton.disabled = false;
-            boton.innerHTML = textoOriginal;
             return;
           }
 
@@ -257,8 +223,7 @@
               caratula: formData.get('caratula'),
               tiene_monto: tieneMonto,
               monto: tieneMonto ? parseFloat(formData.get('monto')) || 0 : 0,
-              abogado_responsable: usuarioActual.nombre_completo,
-              area: usuarioActual.area || 'General'
+              abogado_responsable: usuarioActual.nombre_completo
             }])
             .select()
             .single();
@@ -272,18 +237,12 @@
           expedienteId = parseInt(formData.get('expedienteExistente'));
           if (!expedienteId) {
             alert('Seleccione un expediente');
-            guardando = false;
-            boton.disabled = false;
-            boton.innerHTML = textoOriginal;
             return;
           }
         }
 
         if (!formData.get('fechaActuacion') || !formData.get('descripcionActuacion')) {
           alert('Complete fecha y descripción de la actuación');
-          guardando = false;
-          boton.disabled = false;
-          boton.innerHTML = textoOriginal;
           return;
         }
 
@@ -297,9 +256,6 @@
           if (archivoExiste) {
             const confirmar = confirm(`⚠️ Ya existe un archivo llamado "${archivo.name}" en este expediente.\n\n¿Querés subirlo de todas formas?`);
             if (!confirmar) {
-              guardando = false;
-              boton.disabled = false;
-              boton.innerHTML = textoOriginal;
               return;
             }
           }
@@ -316,8 +272,7 @@
             descripcion_actuacion: formData.get('descripcionActuacion'),
             archivo_url: archivoData.url,
             archivo_nombre: archivoData.nombre,
-            observaciones: formData.get('observaciones') || '',
-            tipo_actuacion: 'Actuación General'
+            observaciones: formData.get('observaciones') || ''
           }]);
         
         if (actError) throw actError;
@@ -406,6 +361,27 @@
 
       app.innerHTML = `
         <div class="min-h-screen">
+          <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h1 class="text-3xl font-bold">⚖️ Sistema de Cobranzas - Abogados</h1>
+                  <p class="text-indigo-200 mt-1">Municipalidad de Asunción</p>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="text-right bg-white/10 px-4 py-2 rounded-lg">
+                    <p class="text-sm font-semibold">👤 ${usuarioActual.nombre_completo}</p>
+                    <p class="text-xs text-indigo-200">${usuarioActual.area || 'Abogado'}</p>
+                  </div>
+                  <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
+                    <span>🚪</span>
+                    <span class="hidden sm:inline">Salir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="bg-white rounded-lg shadow-md p-2 flex gap-2">
               <button onclick="cambiarVista('formulario')" 
@@ -433,11 +409,13 @@
         </div>
       `;
 
-      if (vistaActual === 'formulario') {
-        renderFormulario();
-      } else {
-        renderHistorial();
-      }
+      setTimeout(() => {
+        if (vistaActual === 'formulario') {
+          renderFormulario();
+        } else {
+          renderHistorial();
+        }
+      }, 100);
     }
 
     function renderFormulario() {
