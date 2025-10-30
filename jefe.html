@@ -6,6 +6,69 @@
   <title>Panel del Jefe - Sistema de Cobranzas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS para exportar a Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    /* Transiciones suaves para modo oscuro */
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    
+    /* Clases para modo oscuro */
+    .dark body {
+      background-color: #111827;
+      color: #f9fafb;
+    }
+    
+    .dark .bg-white {
+      background-color: #1f2937 !important;
+    }
+    
+    .dark .bg-gray-50 {
+      background-color: #111827 !important;
+    }
+    
+    .dark .text-gray-800 {
+      color: #f9fafb !important;
+    }
+    
+    .dark .text-gray-700 {
+      color: #e5e7eb !important;
+    }
+    
+    .dark .text-gray-600 {
+      color: #d1d5db !important;
+    }
+    
+    .dark .text-gray-500 {
+      color: #9ca3af !important;
+    }
+    
+    .dark .border-gray-300 {
+      border-color: #4b5563 !important;
+    }
+    
+    .dark .bg-gray-100 {
+      background-color: #374151 !important;
+    }
+    
+    .dark .bg-gray-200 {
+      background-color: #4b5563 !important;
+    }
+    
+    .dark input, .dark select {
+      background-color: #374151 !important;
+      color: #f9fafb !important;
+    }
+    
+    .dark .hover\:bg-gray-100:hover {
+      background-color: #374151 !important;
+    }
+    
+    .dark .hover\:bg-gray-300:hover {
+      background-color: #4b5563 !important;
+    }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
   
@@ -21,6 +84,12 @@
           </div>
         </div>
         <div class="flex items-center gap-4">
+          <!-- Toggle Modo Nocturno -->
+          <button onclick="toggleModoNocturno()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
+            <span id="iconoModo">🌙</span>
+            <span class="hidden sm:inline" id="textoModo">Modo Oscuro</span>
+          </button>
+          
           <div class="text-right">
             <div class="flex items-center gap-2">
               <span>👤</span>
@@ -153,8 +222,8 @@
         <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
           <span>📊</span> Actuaciones Registradas
         </h2>
-        <button onclick="exportarDatos()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
-          📥 Exportar
+        <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
+          <span>📥</span> Exportar a Excel
         </button>
       </div>
       
@@ -184,10 +253,33 @@
     let usuarioActual = null;
     let paginaActual = 1;
     const itemsPorPagina = 20;
-    let abogadosConArea = {}; // Para guardar área de cada abogado
+    let abogadosConArea = {};
+    let todosExpedientes = []; // Guardar para export
+    let todasActuaciones = []; // Guardar para export
+
+    // Modo nocturno
+    function toggleModoNocturno() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      // Guardar preferencia
+      localStorage.setItem('modoNocturno', isDark ? 'true' : 'false');
+      
+      // Actualizar iconos y texto
+      document.getElementById('iconoModo').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('textoModo').textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
+    }
 
     // Verificar sesión al cargar
     window.addEventListener('DOMContentLoaded', () => {
+      // Cargar preferencia de modo nocturno
+      const modoGuardado = localStorage.getItem('modoNocturno');
+      if (modoGuardado === 'true') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('iconoModo').textContent = '☀️';
+        document.getElementById('textoModo').textContent = 'Modo Claro';
+      }
+
       const usuarioGuardado = localStorage.getItem('usuarioActual');
       if (!usuarioGuardado) {
         window.location.href = 'index.html';
@@ -196,7 +288,6 @@
       
       usuarioActual = JSON.parse(usuarioGuardado);
       
-      // Verificar que sea jefe
       if (usuarioActual.rol !== 'jefe') {
         alert('Acceso no autorizado');
         localStorage.removeItem('usuarioActual');
@@ -204,16 +295,13 @@
         return;
       }
 
-      // Mostrar info del usuario
       document.getElementById('nombreUsuario').textContent = usuarioActual.nombre_completo;
 
-      // Cargar datos
       cargarAbogados();
       cargarDatos();
       suscribirCambios();
     });
 
-    // Función para cerrar sesión
     function cerrarSesion() {
       if (confirm('¿Estás seguro que querés cerrar sesión?')) {
         localStorage.removeItem('usuarioActual');
@@ -221,7 +309,6 @@
       }
     }
 
-    // Cargar lista de abogados para filtro (CON su área)
     async function cargarAbogados() {
       try {
         const { data, error } = await supabase
@@ -235,7 +322,6 @@
 
         const select = document.getElementById('filtroAbogado');
         data.forEach(abogado => {
-          // Guardar el área de cada abogado
           abogadosConArea[abogado.nombre_completo] = abogado.area;
           
           const option = document.createElement('option');
@@ -248,7 +334,6 @@
       }
     }
 
-    // Cargar datos con filtros
     async function cargarDatos() {
       try {
         const filtroAbogado = document.getElementById('filtroAbogado').value;
@@ -256,7 +341,6 @@
         const filtroTipo = document.getElementById('filtroTipo').value;
         const filtroPeriodo = parseInt(document.getElementById('filtroPeriodo').value);
 
-        // Calcular fecha límite
         let fechaLimite = null;
         if (filtroPeriodo > 0) {
           const fecha = new Date();
@@ -276,7 +360,6 @@
         const { data: expedientes, count: countExpedientes, error: errorExp } = await queryExpedientes;
         if (errorExp) throw errorExp;
 
-        // Filtrar por tipo (Interno/Externo) usando el área del abogado
         let expedientesFiltrados = expedientes || [];
         if (filtroTipo) {
           expedientesFiltrados = expedientes.filter(exp => {
@@ -285,7 +368,7 @@
           });
         }
 
-        // Cargar actuaciones - NOMBRES DE COLUMNAS CORRECTOS ✅
+        // Cargar actuaciones
         let queryActuaciones = supabase
           .from('actuaciones_cobranzas')
           .select('*', { count: 'exact' })
@@ -297,7 +380,6 @@
         const { data: actuaciones, count: countActuaciones, error: errorAct } = await queryActuaciones;
         if (errorAct) throw errorAct;
 
-        // Filtrar actuaciones por tipo si es necesario
         let actuacionesFiltradas = actuaciones || [];
         if (filtroTipo) {
           actuacionesFiltradas = actuaciones.filter(act => {
@@ -306,7 +388,11 @@
           });
         }
 
-        // Actualizar estadísticas - MONTO CORRECTO ✅
+        // Guardar para export
+        todosExpedientes = expedientesFiltrados;
+        todasActuaciones = actuacionesFiltradas;
+
+        // Actualizar estadísticas
         document.getElementById('totalExpedientes').textContent = expedientesFiltrados.length || 0;
         document.getElementById('totalActuaciones').textContent = actuacionesFiltradas.length || 0;
         
@@ -316,7 +402,6 @@
         const abogadosUnicos = new Set(actuacionesFiltradas.map(act => act.abogado));
         document.getElementById('abogadosActivos').textContent = abogadosUnicos.size;
 
-        // Mostrar actuaciones
         mostrarActuaciones(actuacionesFiltradas, expedientes);
 
       } catch (error) {
@@ -325,7 +410,6 @@
       }
     }
 
-    // Función para obtener el badge de tipo
     function getBadgeTipo(abogado) {
       const area = abogadosConArea[abogado];
       
@@ -337,7 +421,6 @@
       return '';
     }
 
-    // Mostrar actuaciones - NOMBRES DE COLUMNAS CORRECTOS ✅
     function mostrarActuaciones(actuaciones, expedientes) {
       const lista = document.getElementById('listaActuaciones');
       
@@ -346,13 +429,11 @@
         return;
       }
 
-      // Paginación
       const inicio = (paginaActual - 1) * itemsPorPagina;
       const fin = inicio + itemsPorPagina;
       const actuacionesPagina = actuaciones.slice(inicio, fin);
 
       lista.innerHTML = actuacionesPagina.map(act => {
-        // Buscar el expediente correspondiente
         const expediente = expedientes.find(e => e.id === act.expediente_cobranza_id);
         
         return `
@@ -379,7 +460,6 @@
         </div>
       `}).join('');
 
-      // Mostrar info de paginación
       const totalPaginas = Math.ceil(actuaciones.length / itemsPorPagina);
       if (totalPaginas > 1) {
         document.getElementById('paginacion').classList.remove('hidden');
@@ -389,20 +469,17 @@
       }
     }
 
-    // Aplicar filtros
     function aplicarFiltros() {
       paginaActual = 1;
       cargarDatos();
     }
 
-    // Cambiar página
     function cambiarPagina(direccion) {
       paginaActual += direccion;
       if (paginaActual < 1) paginaActual = 1;
       cargarDatos();
     }
 
-    // Suscribirse a cambios en tiempo real
     function suscribirCambios() {
       supabase
         .channel('cambios-jefe')
@@ -417,50 +494,67 @@
         .subscribe();
     }
 
-    // Exportar datos
-    async function exportarDatos() {
+    // NUEVA FUNCIÓN: Exportar a Excel con todos los campos
+    async function exportarAExcel() {
       try {
-        const { data: actuaciones, error: actError } = await supabase
-          .from('actuaciones_cobranzas')
-          .select('*')
-          .order('fecha_actuacion', { ascending: false });
+        console.log('Exportando a Excel...');
 
-        if (actError) throw actError;
+        // Crear datos para Excel con TODOS los campos solicitados
+        const datosExcel = todasActuaciones.map(act => {
+          const exp = todosExpedientes.find(e => e.id === act.expediente_cobranza_id);
+          
+          return {
+            'Fecha Actuación': act.fecha_actuacion,
+            'N° Expediente': exp ? `${exp.num_expediente}/${exp.anio}` : 'N/A',
+            'Carátula': exp ? exp.caratula : 'N/A',
+            'Juzgado': exp && exp.juzgado ? exp.juzgado : 'N/A',
+            'Turno': exp && exp.turno ? exp.turno : 'N/A',
+            'Secretaría': exp && exp.secretaria ? exp.secretaria : 'N/A',
+            'Abogado': act.abogado,
+            'Tipo Abogado': abogadosConArea[act.abogado] || 'N/A',
+            'Descripción Actuación': act.descripcion_actuacion,
+            'Observaciones': act.observaciones || '',
+            'Monto (Gs)': exp && exp.monto ? parseFloat(exp.monto) : 0,
+            'Archivo': act.archivo_nombre || 'Sin archivo',
+            'Link Archivo': act.archivo_url || ''
+          };
+        });
 
-        const { data: expedientes, error: expError } = await supabase
-          .from('expedientes_cobranzas')
-          .select('*');
+        // Crear libro de Excel
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(datosExcel);
 
-        if (expError) throw expError;
+        // Ajustar ancho de columnas
+        const columnWidths = [
+          { wch: 12 }, // Fecha
+          { wch: 15 }, // N° Expediente
+          { wch: 40 }, // Carátula
+          { wch: 25 }, // Juzgado
+          { wch: 10 }, // Turno
+          { wch: 20 }, // Secretaría
+          { wch: 25 }, // Abogado
+          { wch: 15 }, // Tipo
+          { wch: 50 }, // Descripción
+          { wch: 30 }, // Observaciones
+          { wch: 15 }, // Monto
+          { wch: 30 }, // Archivo
+          { wch: 60 }  // Link
+        ];
+        ws['!cols'] = columnWidths;
 
-        // Convertir a CSV con nombres correctos
-        const csv = [
-          ['Fecha', 'Expediente', 'Carátula', 'Descripción', 'Observaciones', 'Abogado', 'Tipo Abogado', 'Monto', 'Archivo'].join(','),
-          ...actuaciones.map(act => {
-            const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
-            return [
-              act.fecha_actuacion,
-              exp ? `${exp.num_expediente}/${exp.anio}` : 'N/A',
-              exp ? exp.caratula.replace(/,/g, ';') : 'N/A',
-              act.descripcion_actuacion.replace(/,/g, ';'),
-              (act.observaciones || '').replace(/,/g, ';'),
-              act.abogado,
-              abogadosConArea[act.abogado] || '',
-              exp && exp.monto ? parseFloat(exp.monto) : 0,
-              act.archivo_nombre || ''
-            ].join(',');
-          })
-        ].join('\n');
+        // Agregar la hoja al libro
+        XLSX.utils.book_append_sheet(wb, ws, 'Actuaciones');
 
-        // Descargar
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `reporte_cobranzas_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
+        // Generar y descargar archivo
+        const nombreArchivo = `Reporte_Cobranzas_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, nombreArchivo);
+
+        console.log('Archivo Excel generado:', nombreArchivo);
+        alert('✅ Archivo Excel descargado exitosamente');
+
       } catch (error) {
-        alert('Error al exportar datos: ' + error.message);
+        console.error('Error al exportar a Excel:', error);
+        alert('❌ Error al exportar: ' + error.message);
       }
     }
   </script>
