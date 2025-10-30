@@ -18,7 +18,7 @@
   </div>
 
   <script>
-    // Configuración de Supabase
+    // ConfiguraciÃ³n de Supabase
     const SUPABASE_URL = 'https://wyxrtqudbjbwwlmqlrbc.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5eHJ0cXVkYmpid3dsbXFscmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTc2ODcsImV4cCI6MjA3Mzg3MzY4N30.vV0m-2D9Hod6t3CwW9ggFlgmMewlF0SaeuC2horX8fs';
     
@@ -34,7 +34,7 @@
     let guardando = false;
 
     async function init() {
-      console.log('Iniciando aplicación...');
+      console.log('Iniciando aplicaciÃ³n...');
       
       // Verificar si hay usuario logueado
       const usuarioGuardado = localStorage.getItem('usuarioActual');
@@ -190,7 +190,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span>Guardando actuación...</span>
+          <span>Guardando actuaciÃ³n...</span>
         </div>
       `;
 
@@ -199,7 +199,7 @@
 
         if (tipoRegistro === 'nuevo') {
           if (!formData.get('numExpediente') || !formData.get('caratula')) {
-            alert('Complete número de expediente y carátula');
+            alert('Complete nÃºmero de expediente y carÃ¡tula');
             return;
           }
 
@@ -239,7 +239,7 @@
         }
 
         if (!formData.get('fechaActuacion') || !formData.get('descripcionActuacion')) {
-          alert('Complete fecha y descripción de la actuación');
+          alert('Complete fecha y descripciÃ³n de la actuaciÃ³n');
           return;
         }
 
@@ -251,7 +251,7 @@
           const archivoExiste = actExpediente.some(a => a.archivo_nombre === archivo.name);
           
           if (archivoExiste) {
-            const confirmar = confirm(`⚠️ Ya existe un archivo llamado "${archivo.name}" en este expediente.\n\n¿Querés subirlo de todas formas?`);
+            const confirmar = confirm(`âš ï¸ Ya existe un archivo llamado "${archivo.name}" en este expediente.\n\nÂ¿QuerÃ©s subirlo de todas formas?`);
             if (!confirmar) {
               return;
             }
@@ -274,7 +274,7 @@
         
         if (actError) throw actError;
 
-        alert('✅ Actuación registrada exitosamente');
+        alert('âœ… ActuaciÃ³n registrada exitosamente');
         form.reset();
         
         document.getElementById('camposExpedienteNuevo').style.display = 'none';
@@ -287,7 +287,7 @@
         
       } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error: ' + error.message);
+        alert('âŒ Error: ' + error.message);
       } finally {
         guardando = false;
         if (boton) {
@@ -329,7 +329,7 @@
 
       if (actsExp.length === 0) {
         resumen.style.display = 'block';
-        lista.innerHTML = '<p class="text-sm text-gray-600 italic">Este expediente no tiene actuaciones registradas aún.</p>';
+        lista.innerHTML = '<p class="text-sm text-gray-600 italic">Este expediente no tiene actuaciones registradas aÃºn.</p>';
         return;
       }
 
@@ -341,19 +341,19 @@
               #${actsExp.length - index}
             </span>
             <span class="text-xs font-semibold text-gray-600">
-              📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
+              ðŸ“… ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
             </span>
           </div>
           <p class="text-gray-900 font-medium mt-1">${act.descripcion_actuacion}</p>
           ${act.archivo_nombre ? `
-            <p class="text-xs text-indigo-600 mt-1">📎 ${act.archivo_nombre}</p>
+            <p class="text-xs text-indigo-600 mt-1">ðŸ“Ž ${act.archivo_nombre}</p>
           ` : ''}
         </div>
       `).join('');
     }
 
     function cerrarSesion() {
-      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
+      if (confirm('Â¿EstÃ¡s seguro que querÃ©s cerrar sesiÃ³n?')) {
         localStorage.removeItem('usuarioActual');
         window.location.href = 'index.html';
       }
@@ -369,16 +369,16 @@
             <div class="max-w-7xl mx-auto px-4 py-6">
               <div class="flex justify-between items-center">
                 <div>
-                  <h1 class="text-3xl font-bold">⚖️ Sistema de Cobranzas - Abogados</h1>
-                  <p class="text-indigo-200 mt-1">Municipalidad de Asunción</p>
+                  <h1 class="text-3xl font-bold">âš–ï¸ Sistema de Cobranzas - Abogados</h1>
+                  <p class="text-indigo-200 mt-1">Municipalidad de AsunciÃ³n</p>
                 </div>
                 <div class="flex items-center gap-4">
                   <div class="text-right bg-white/10 px-4 py-2 rounded-lg">
-                    <p class="text-sm font-semibold">👤 ${usuarioActual.nombre_completo}</p>
+                    <p class="text-sm font-semibold">ðŸ‘¤ ${usuarioActual.nombre_completo}</p>
                     <p class="text-xs text-indigo-200">Abogado</p>
                   </div>
                   <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition">
-                    <span>🚪</span>
+                    <span>ðŸšª</span>
                     <span class="hidden sm:inline">Salir</span>
                   </button>
                 </div>
@@ -394,7 +394,7 @@
                     ? 'bg-indigo-600 text-white shadow-lg' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }">
-                📝 Registrar Actuación
+                ðŸ“ Registrar ActuaciÃ³n
               </button>
               <button onclick="cambiarVista('historial')" 
                 class="flex-1 py-3 px-4 rounded-md font-semibold transition-all ${
@@ -402,7 +402,7 @@
                     ? 'bg-indigo-600 text-white shadow-lg' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }">
-                📚 Mi Historial
+                ðŸ“š Mi Historial
               </button>
             </div>
           </div>
@@ -423,13 +423,13 @@
     function renderFormulario() {
       document.getElementById('contenido').innerHTML = `
         <div class="bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Registrar Nueva Actuación</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">ðŸ“‹ Registrar Nueva ActuaciÃ³n</h2>
           
           <form id="formActuacion" class="space-y-5">
             
             <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
               <label class="block text-sm font-semibold text-gray-700 mb-3">
-                ¿Es un expediente nuevo o agregás actuación a uno existente?
+                Â¿Es un expediente nuevo o agregÃ¡s actuaciÃ³n a uno existente?
               </label>
               <div class="flex gap-4">
                 <label class="flex items-center cursor-pointer">
@@ -465,7 +465,7 @@
               
               <div id="resumenActuaciones" style="display: none;" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 class="font-bold text-blue-900 mb-2 flex items-center gap-2">
-                  <span>📋</span>
+                  <span>ðŸ“‹</span>
                   <span>Actuaciones registradas en este expediente:</span>
                 </h4>
                 <div id="listaActuaciones" class="space-y-2 max-h-60 overflow-y-auto"></div>
@@ -473,19 +473,19 @@
             </div>
 
             <div id="camposExpedienteNuevo" style="display: none;" class="space-y-4 bg-green-50 p-4 rounded-lg">
-              <h3 class="font-bold text-green-800">📂 Datos del Nuevo Expediente</h3>
+              <h3 class="font-bold text-green-800">ðŸ“‚ Datos del Nuevo Expediente</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-2">
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    N° Expediente <span class="text-red-500">*</span>
+                    NÂ° Expediente <span class="text-red-500">*</span>
                   </label>
                   <input type="text" name="numExpediente"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    Año <span class="text-red-500">*</span>
+                    AÃ±o <span class="text-red-500">*</span>
                   </label>
                   <input type="text" name="anio" value="${new Date().getFullYear()}"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
@@ -494,7 +494,7 @@
 
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Carátula <span class="text-red-500">*</span>
+                  CarÃ¡tula <span class="text-red-500">*</span>
                 </label>
                 <input type="text" name="caratula"
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -506,13 +506,20 @@
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
                     🏛️ Juzgado
                   </label>
-                  <input type="text" name="juzgado"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Juzgado de Primera Instancia">
+                  <select name="juzgado" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="Juzgado de Primera Instancia en lo Civil y Comercial">Civil y Comercial</option>
+                    <option value="Juzgado de Primera Instancia en lo Penal">Penal</option>
+                    <option value="Juzgado de Primera Instancia en lo Laboral">Laboral</option>
+                    <option value="Juzgado de Primera Instancia en lo Contencioso Administrativo">Contencioso Administrativo</option>
+                    <option value="Juzgado de Primera Instancia de la Niñez y Adolescencia">Niñez y Adolescencia</option>
+                    <option value="Juzgado de Paz">Juzgado de Paz</option>
+                    <option value="Tribunal de Cuentas">Tribunal de Cuentas</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    🔄 Turno
+                    ðŸ”„ Turno
                   </label>
                   <select name="turno" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                     <option value="">-- Seleccionar --</option>
@@ -521,11 +528,11 @@
                 </div>
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    📋 Secretaría
+                    ðŸ“‹ SecretarÃ­a
                   </label>
                   <select name="secretaria" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                     <option value="">-- Seleccionar --</option>
-                    ${Array.from({length: 100}, (_, i) => i + 1).map(n => `<option value="Secretaría N° ${n}">Secretaría N° ${n}</option>`).join('')}
+                    ${Array.from({length: 100}, (_, i) => i + 1).map(n => `<option value="SecretarÃ­a NÂ° ${n}">SecretarÃ­a NÂ° ${n}</option>`).join('')}
                   </select>
                 </div>
               </div>
@@ -540,17 +547,17 @@
                 <div id="montoInputNuevo" class="mt-3">
                   <input type="number" name="monto" 
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Monto en Guaraníes (₲)">
+                    placeholder="Monto en GuaranÃ­es (â‚²)">
                 </div>
               </div>
             </div>
 
             <div class="bg-purple-50 p-4 rounded-lg space-y-4">
-              <h3 class="font-bold text-purple-800">📝 Datos de la Actuación</h3>
+              <h3 class="font-bold text-purple-800">ðŸ“ Datos de la ActuaciÃ³n</h3>
 
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Fecha de la Actuación <span class="text-red-500">*</span>
+                  Fecha de la ActuaciÃ³n <span class="text-red-500">*</span>
                 </label>
                 <input type="date" name="fechaActuacion" required
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
@@ -558,22 +565,22 @@
 
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Descripción de la Actuación <span class="text-red-500">*</span>
+                  DescripciÃ³n de la ActuaciÃ³n <span class="text-red-500">*</span>
                 </label>
                 <textarea name="descripcionActuacion" rows="4" required
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Describa detalladamente la actuación realizada..."></textarea>
+                  placeholder="Describa detalladamente la actuaciÃ³n realizada..."></textarea>
               </div>
 
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  📎 Archivo de la Actuación <span class="text-red-500">*</span>
+                  ðŸ“Ž Archivo de la ActuaciÃ³n <span class="text-red-500">*</span>
                 </label>
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-indigo-400 transition-colors text-center">
                   <input type="file" name="archivo" required
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     class="w-full text-sm text-gray-600">
-                  <p class="text-xs text-gray-500 mt-2">📄 PDF, DOC, DOCX, JPG o PNG (máx. 10MB) - OBLIGATORIO</p>
+                  <p class="text-xs text-gray-500 mt-2">ðŸ“„ PDF, DOC, DOCX, JPG o PNG (mÃ¡x. 10MB) - OBLIGATORIO</p>
                 </div>
               </div>
 
@@ -589,11 +596,11 @@
 
             <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
               <div class="flex items-start">
-                <span class="text-2xl mr-3">⚠️</span>
+                <span class="text-2xl mr-3">âš ï¸</span>
                 <div>
                   <p class="text-sm font-semibold text-yellow-800">Importante</p>
                   <p class="text-sm text-yellow-700 mt-1">
-                    Las actuaciones registradas no pueden ser eliminadas y quedarán en el historial permanente.
+                    Las actuaciones registradas no pueden ser eliminadas y quedarÃ¡n en el historial permanente.
                   </p>
                 </div>
               </div>
@@ -601,7 +608,7 @@
 
             <button type="submit" id="btnGuardar"
               class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-4 rounded-lg font-bold text-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-              ✅ Registrar Actuación
+              âœ… Registrar ActuaciÃ³n
             </button>
           </form>
         </div>
@@ -613,12 +620,12 @@
     function renderHistorial() {
       document.getElementById('contenido').innerHTML = `
         <div class="bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">📚 Mi Historial de Expedientes</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">ðŸ“š Mi Historial de Expedientes</h2>
           
           ${expedientes.length === 0 ? `
             <div class="text-center py-12 text-gray-500">
-              <p class="text-xl">🔭 No tenés expedientes registrados</p>
-              <p class="text-sm mt-2">Comenzá registrando tu primera actuación</p>
+              <p class="text-xl">ðŸ”­ No tenÃ©s expedientes registrados</p>
+              <p class="text-sm mt-2">ComenzÃ¡ registrando tu primera actuaciÃ³n</p>
             </div>
           ` : `
             <div class="space-y-6">
@@ -631,29 +638,29 @@
                     <div class="flex justify-between items-start mb-4">
                       <div>
                         <h3 class="text-xl font-bold text-gray-900">
-                          📂 Expte. ${exp.num_expediente}/${exp.anio}
+                          ðŸ“‚ Expte. ${exp.num_expediente}/${exp.anio}
                         </h3>
                         <p class="text-gray-700 font-semibold mt-1">${exp.caratula}</p>
                         ${exp.juzgado || exp.turno || exp.secretaria ? `
                           <div class="flex gap-3 mt-2 text-sm text-gray-600">
-                            ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded">🏛️ ${exp.juzgado}</span>` : ''}
-                            ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded">🔄 ${exp.turno}</span>` : ''}
-                            ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded">📋 ${exp.secretaria}</span>` : ''}
+                            ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded">ðŸ›ï¸ ${exp.juzgado}</span>` : ''}
+                            ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded">ðŸ”„ ${exp.turno}</span>` : ''}
+                            ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded">ðŸ“‹ ${exp.secretaria}</span>` : ''}
                           </div>
                         ` : ''}
                         ${exp.tiene_monto && exp.monto > 0 ? `
                           <p class="text-green-700 font-bold text-lg mt-2">
-                            💰 ₲ ${parseFloat(exp.monto).toLocaleString('es-PY')}
+                            ðŸ’° â‚² ${parseFloat(exp.monto).toLocaleString('es-PY')}
                           </p>
                         ` : ''}
                       </div>
                       <span class="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                        ${actExp.length} actuación${actExp.length !== 1 ? 'es' : ''}
+                        ${actExp.length} actuaciÃ³n${actExp.length !== 1 ? 'es' : ''}
                       </span>
                     </div>
 
                     <div class="mt-4 border-t-2 border-indigo-200 pt-4">
-                      <h4 class="font-bold text-indigo-800 mb-3">📝 HISTORIAL DE ACTUACIONES:</h4>
+                      <h4 class="font-bold text-indigo-800 mb-3">ðŸ“ HISTORIAL DE ACTUACIONES:</h4>
                       ${actExp.length === 0 ? `
                         <p class="text-gray-500 text-sm italic">Sin actuaciones registradas</p>
                       ` : `
@@ -665,7 +672,7 @@
                                   #${actExp.length - index}
                                 </span>
                                 <span class="text-sm font-semibold text-gray-600">
-                                  📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
+                                  ðŸ“… ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
                                 </span>
                               </div>
                               
@@ -673,21 +680,21 @@
                               
                               ${act.observaciones ? `
                                 <p class="text-sm text-gray-600 italic mb-2">
-                                  💭 ${act.observaciones}
+                                  ðŸ’­ ${act.observaciones}
                                 </p>
                               ` : ''}
                               
                               ${act.archivo_nombre ? `
                                 <a href="${act.archivo_url}" target="_blank" rel="noopener noreferrer"
                                   class="flex items-center gap-2 text-indigo-700 hover:text-indigo-900 font-semibold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded transition-colors">
-                                  <span class="text-lg">📎</span>
+                                  <span class="text-lg">ðŸ“Ž</span>
                                   <span class="flex-1">${act.archivo_nombre}</span>
-                                  <span class="text-xs text-indigo-600">↗️</span>
+                                  <span class="text-xs text-indigo-600">â†—ï¸</span>
                                 </a>
                               ` : ''}
                               
                               <p class="text-xs text-gray-400 mt-2">
-                                ⏰ Registrado: ${new Date(act.fecha_registro).toLocaleString('es-PY')}
+                                â° Registrado: ${new Date(act.fecha_registro).toLocaleString('es-PY')}
                               </p>
                             </div>
                           `).join('')}
