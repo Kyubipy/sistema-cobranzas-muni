@@ -46,26 +46,26 @@
     <div class="container mx-auto px-4 py-4">
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-3">
-          <span class="text-3xl">⚖️</span>
+          <span class="text-3xl">âš–ï¸</span>
           <div>
-            <h1 class="text-xl font-bold">Panel de Supervisión</h1>
-            <p class="text-sm text-purple-100">Sistema de Cobranzas - Municipalidad de Asunción</p>
+            <h1 class="text-xl font-bold">Panel de SupervisiÃ³n</h1>
+            <p class="text-sm text-purple-100">Sistema de Cobranzas - Municipalidad de AsunciÃ³n</p>
           </div>
         </div>
         <div class="flex items-center gap-4">
           <button onclick="toggleModoNocturno()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
-            <span id="iconoModo">🌙</span>
+            <span id="iconoModo">ðŸŒ™</span>
             <span class="hidden sm:inline" id="textoModo">Modo Oscuro</span>
           </button>
           <div class="text-right">
             <div class="flex items-center gap-2">
-              <span>👤</span>
+              <span>ðŸ‘¤</span>
               <span id="nombreUsuario" class="font-semibold"></span>
             </div>
             <div class="text-xs text-purple-100">Supervisor</div>
           </div>
           <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
-            <span>🚪</span>
+            <span>ðŸšª</span>
             <span class="hidden sm:inline">Salir</span>
           </button>
         </div>
@@ -76,9 +76,9 @@
   <div class="container mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
       <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        <span>🔍</span> Filtros
+        <span>ðŸ”</span> Filtros
       </h2>
-      <div class="grid md:grid-cols-4 gap-4">
+      <div class="grid md:grid-cols-3 gap-4">
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Abogado</label>
           <select id="filtroAbogado" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
@@ -86,35 +86,20 @@
           </select>
         </div>
         <div>
-          <label class="block text-gray-700 font-semibold mb-2">Área</label>
-          <select id="filtroArea" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
-            <option value="">Todas las áreas</option>
-            <option value="Civil">Civil</option>
-            <option value="Penal">Penal</option>
-            <option value="Laboral">Laboral</option>
-            <option value="Comercial">Comercial</option>
-            <option value="Administrativo">Administrativo</option>
-            <option value="Tributario">Tributario</option>
-            <option value="Interno">Interno</option>
-            <option value="Externo">Externo</option>
-            <option value="Asesoría">Asesoría</option>
-          </select>
-        </div>
-        <div>
           <label class="block text-gray-700 font-semibold mb-2">Tipo de Abogado</label>
           <select id="filtroTipo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="">Todos</option>
-            <option value="Interno">🏢 Solo Internos</option>
-            <option value="Externo">🏠 Solo Externos</option>
+            <option value="Interno">ðŸ¢ Solo Internos</option>
+            <option value="Externo">ðŸ  Solo Externos</option>
           </select>
         </div>
         <div>
-          <label class="block text-gray-700 font-semibold mb-2">Período</label>
+          <label class="block text-gray-700 font-semibold mb-2">PerÃ­odo</label>
           <select id="filtroPeriodo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
-            <option value="7">Últimos 7 días</option>
-            <option value="30" selected>Últimos 30 días</option>
-            <option value="90">Últimos 3 meses</option>
-            <option value="365">Último año</option>
+            <option value="7">Ãšltimos 7 dÃ­as</option>
+            <option value="30" selected>Ãšltimos 30 dÃ­as</option>
+            <option value="90">Ãšltimos 3 meses</option>
+            <option value="365">Ãšltimo aÃ±o</option>
             <option value="0">Todo</option>
           </select>
         </div>
@@ -124,14 +109,14 @@
       </button>
     </div>
 
-    <div class="grid md:grid-cols-4 gap-6 mb-8">
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-500 text-sm font-semibold">Total Expedientes</p>
             <p id="totalExpedientes" class="text-3xl font-bold text-gray-800 mt-1">0</p>
           </div>
-          <span class="text-4xl">📂</span>
+          <span class="text-4xl">ðŸ“‚</span>
         </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
@@ -140,7 +125,7 @@
             <p class="text-gray-500 text-sm font-semibold">Total Actuaciones</p>
             <p id="totalActuaciones" class="text-3xl font-bold text-gray-800 mt-1">0</p>
           </div>
-          <span class="text-4xl">📝</span>
+          <span class="text-4xl">ðŸ“</span>
         </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
@@ -149,7 +134,7 @@
             <p class="text-gray-500 text-sm font-semibold">Monto Total</p>
             <p id="montoTotal" class="text-2xl font-bold text-gray-800 mt-1">Gs. 0</p>
           </div>
-          <span class="text-4xl">💰</span>
+          <span class="text-4xl">ðŸ’°</span>
         </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
@@ -158,7 +143,7 @@
             <p class="text-gray-500 text-sm font-semibold">Abogados Activos</p>
             <p id="abogadosActivos" class="text-3xl font-bold text-gray-800 mt-1">0</p>
           </div>
-          <span class="text-4xl">👥</span>
+          <span class="text-4xl">ðŸ‘¥</span>
         </div>
       </div>
     </div>
@@ -180,7 +165,7 @@
       document.documentElement.classList.toggle('dark');
       const isDark = document.documentElement.classList.contains('dark');
       localStorage.setItem('modoNocturno', isDark ? 'true' : 'false');
-      document.getElementById('iconoModo').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('iconoModo').textContent = isDark ? 'â˜€ï¸' : 'ðŸŒ™';
       document.getElementById('textoModo').textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
     }
 
@@ -188,7 +173,7 @@
       const modoGuardado = localStorage.getItem('modoNocturno');
       if (modoGuardado === 'true') {
         document.documentElement.classList.add('dark');
-        document.getElementById('iconoModo').textContent = '☀️';
+        document.getElementById('iconoModo').textContent = 'â˜€ï¸';
         document.getElementById('textoModo').textContent = 'Modo Claro';
       }
 
@@ -213,7 +198,7 @@
     });
 
     function cerrarSesion() {
-      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
+      if (confirm('Â¿EstÃ¡s seguro que querÃ©s cerrar sesiÃ³n?')) {
         localStorage.removeItem('usuarioActual');
         window.location.href = 'index.html';
       }
@@ -246,7 +231,6 @@
     async function cargarDatos() {
       try {
         const filtroAbogado = document.getElementById('filtroAbogado').value;
-        const filtroArea = document.getElementById('filtroArea').value;
         const filtroTipo = document.getElementById('filtroTipo').value;
         const filtroPeriodo = parseInt(document.getElementById('filtroPeriodo').value);
 
@@ -259,7 +243,6 @@
 
         let queryExpedientes = supabase.from('expedientes_cobranzas').select('*', { count: 'exact' });
         if (filtroAbogado) queryExpedientes = queryExpedientes.eq('abogado_responsable', filtroAbogado);
-        if (filtroArea) queryExpedientes = queryExpedientes.eq('area', filtroArea);
         if (fechaLimite) queryExpedientes = queryExpedientes.gte('created_at', fechaLimite);
 
         const { data: expedientes, error: errorExp } = await queryExpedientes;
@@ -320,9 +303,9 @@
     function getBadgeTipo(abogado) {
       const area = abogadosConArea[abogado];
       if (area === 'Interno') {
-        return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">🏢 INTERNO</span>';
+        return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">ðŸ¢ INTERNO</span>';
       } else if (area === 'Externo') {
-        return '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">🏠 EXTERNO</span>';
+        return '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">ðŸ  EXTERNO</span>';
       }
       return '';
     }
@@ -335,10 +318,10 @@
           <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span>🕐</span> Últimos Movimientos
+                <span>ðŸ•</span> Ãšltimos Movimientos
               </h2>
               <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
-                <span>📥</span> Exportar a Excel
+                <span>ðŸ“¥</span> Exportar a Excel
               </button>
             </div>
             <div class="space-y-3">
@@ -353,7 +336,7 @@
                           <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
                         </div>
                         ${exp ? `<div class="text-sm text-gray-600 mb-1">${exp.caratula}</div>` : ''}
-                        <div class="text-sm text-gray-600"><strong>📝</strong> ${act.descripcion_actuacion}</div>
+                        <div class="text-sm text-gray-600"><strong>ðŸ“</strong> ${act.descripcion_actuacion}</div>
                       </div>
                       <div class="text-right">
                         <div class="flex items-center gap-2 mb-1">
@@ -370,7 +353,7 @@
 
           <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <span>👥</span> Vista por Abogados
+              <span>ðŸ‘¥</span> Vista por Abogados
             </h2>
             <div id="vistaAbogados" class="space-y-4">
               ${renderVistaAbogados(actuaciones, expedientes)}
@@ -382,10 +365,10 @@
           <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span>📚</span> Actuaciones de ${filtroAbogado}
+                <span>ðŸ“š</span> Actuaciones de ${filtroAbogado}
               </h2>
               <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
-                <span>📥</span> Exportar a Excel
+                <span>ðŸ“¥</span> Exportar a Excel
               </button>
             </div>
             <div class="space-y-3">
@@ -400,9 +383,9 @@
                           <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
                         </div>
                         ${exp ? `<div class="text-sm text-gray-600 mb-1">${exp.caratula}</div>` : ''}
-                        <div class="text-sm text-gray-600"><strong>📝</strong> ${act.descripcion_actuacion}</div>
-                        ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">💭 ${act.observaciones}</div>` : ''}
-                        ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">📎 Ver documento</a>` : ''}
+                        <div class="text-sm text-gray-600"><strong>ðŸ“</strong> ${act.descripcion_actuacion}</div>
+                        ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">ðŸ’­ ${act.observaciones}</div>` : ''}
+                        ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">ðŸ“Ž Ver documento</a>` : ''}
                       </div>
                       <div class="text-right">
                         <div class="text-xs text-gray-500">${new Date(act.fecha_registro).toLocaleDateString('es-PY')} ${new Date(act.fecha_registro).toLocaleTimeString('es-PY')}</div>
@@ -437,7 +420,7 @@
       return abogados.map((abogado, idxAbogado) => {
         const data = porAbogado[abogado];
         const tipo = abogadosConArea[abogado];
-        const badgeTipo = tipo === 'Interno' ? '🏢 INTERNO' : tipo === 'Externo' ? '🏠 EXTERNO' : '';
+        const badgeTipo = tipo === 'Interno' ? 'ðŸ¢ INTERNO' : tipo === 'Externo' ? 'ðŸ  EXTERNO' : '';
         
         return `
           <div class="border-2 border-indigo-200 rounded-xl overflow-hidden">
@@ -445,7 +428,7 @@
                  onclick="toggleAbogado(${idxAbogado})">
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                  <span class="text-3xl">👤</span>
+                  <span class="text-3xl">ðŸ‘¤</span>
                   <div>
                     <h3 class="text-xl font-bold text-gray-900">${abogado}</h3>
                     <span class="text-sm ${tipo === 'Interno' ? 'text-green-700' : 'text-orange-700'} font-semibold">${badgeTipo}</span>
@@ -454,13 +437,13 @@
                 <div class="flex items-center gap-6">
                   <div class="text-center">
                     <p class="text-sm text-gray-600">Expedientes</p>
-                    <p class="text-2xl font-bold text-indigo-600">📂 ${data.expedientes.length}</p>
+                    <p class="text-2xl font-bold text-indigo-600">ðŸ“‚ ${data.expedientes.length}</p>
                   </div>
                   <div class="text-center">
                     <p class="text-sm text-gray-600">Monto Total</p>
-                    <p class="text-xl font-bold text-green-600">💰 ₲ ${formatearMonto(data.monto)}</p>
+                    <p class="text-xl font-bold text-green-600">ðŸ’° â‚² ${formatearMonto(data.monto)}</p>
                   </div>
-                  <div id="iconAbogado${idxAbogado}" class="transition-transform duration-300">▼</div>
+                  <div id="iconAbogado${idxAbogado}" class="transition-transform duration-300">â–¼</div>
                 </div>
               </div>
             </div>
@@ -478,26 +461,26 @@
                         <div class="flex justify-between items-start">
                           <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
-                              <span class="text-lg font-bold text-gray-900">📝 Expte. ${exp.num_expediente}/${exp.anio}</span>
+                              <span class="text-lg font-bold text-gray-900">ðŸ“ Expte. ${exp.num_expediente}/${exp.anio}</span>
                               <span class="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">${actsExp.length} actuaciones</span>
                             </div>
                             <p class="text-gray-700 font-semibold">${exp.caratula}</p>
                             <div class="flex gap-2 mt-2 flex-wrap">
-                              ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded text-xs">🏛️ ${exp.juzgado}</span>` : ''}
-                              ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded text-xs">🔄 ${exp.turno}</span>` : ''}
-                              ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded text-xs">📋 ${exp.secretaria}</span>` : ''}
+                              ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded text-xs">ðŸ›ï¸ ${exp.juzgado}</span>` : ''}
+                              ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded text-xs">ðŸ”„ ${exp.turno}</span>` : ''}
+                              ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded text-xs">ðŸ“‹ ${exp.secretaria}</span>` : ''}
                             </div>
                             ${exp.tiene_monto && exp.monto > 0 ? `
-                              <p class="text-green-700 font-bold text-lg mt-2">💰 ₲ ${formatearMonto(exp.monto)}</p>
+                              <p class="text-green-700 font-bold text-lg mt-2">ðŸ’° â‚² ${formatearMonto(exp.monto)}</p>
                             ` : ''}
                           </div>
-                          <div id="iconExp${idxAbogado}_${idxExp}" class="transition-transform duration-300">▼</div>
+                          <div id="iconExp${idxAbogado}_${idxExp}" class="transition-transform duration-300">â–¼</div>
                         </div>
                       </div>
 
                       <div id="exp${idxAbogado}_${idxExp}" class="accordion-content bg-white">
                         <div class="p-4 space-y-3 border-t-2 border-blue-200">
-                          <h4 class="font-bold text-blue-900 mb-3">📝 ACTUACIONES (más reciente primero):</h4>
+                          <h4 class="font-bold text-blue-900 mb-3">ðŸ“ ACTUACIONES (mÃ¡s reciente primero):</h4>
                           ${actsExp.length === 0 ? `
                             <p class="text-gray-500 text-sm italic">Sin actuaciones registradas</p>
                           ` : actsExp.map((act, actIdx) => `
@@ -507,22 +490,22 @@
                                   #${actsExp.length - actIdx}
                                 </span>
                                 <span class="text-sm font-semibold text-gray-600">
-                                  📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
+                                  ðŸ“… ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
                                 </span>
                               </div>
                               <p class="text-gray-900 font-medium mb-2">${act.descripcion_actuacion}</p>
                               ${act.observaciones ? `
-                                <p class="text-sm text-gray-600 italic mb-2">💭 ${act.observaciones}</p>
+                                <p class="text-sm text-gray-600 italic mb-2">ðŸ’­ ${act.observaciones}</p>
                               ` : ''}
                               ${act.archivo_nombre ? `
                                 <a href="${act.archivo_url}" target="_blank" class="flex items-center gap-2 text-indigo-700 hover:text-indigo-900 font-semibold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded transition-colors">
-                                  <span>📎</span>
+                                  <span>ðŸ“Ž</span>
                                   <span class="flex-1">${act.archivo_nombre}</span>
-                                  <span class="text-xs">↗️</span>
+                                  <span class="text-xs">â†—ï¸</span>
                                 </a>
                               ` : ''}
                               <p class="text-xs text-gray-400 mt-2">
-                                ⏰ ${new Date(act.fecha_registro).toLocaleString('es-PY')}
+                                â° ${new Date(act.fecha_registro).toLocaleString('es-PY')}
                               </p>
                             </div>
                           `).join('')}
@@ -594,14 +577,14 @@
           return {
             'Abogado': act.abogado,
             'Tipo Abogado': item.tipo,
-            'N° Expediente': item.numExpediente,
-            'Carátula': exp ? exp.caratula : 'N/A',
+            'NÂ° Expediente': item.numExpediente,
+            'CarÃ¡tula': exp ? exp.caratula : 'N/A',
             'Juzgado': exp && exp.juzgado ? exp.juzgado : 'N/A',
             'Turno': exp && exp.turno ? exp.turno : 'N/A',
-            'Secretaría': exp && exp.secretaria ? exp.secretaria : 'N/A',
+            'SecretarÃ­a': exp && exp.secretaria ? exp.secretaria : 'N/A',
             'Monto (Gs)': exp && exp.monto ? parseFloat(exp.monto) : 0,
-            'Fecha Actuación': act.fecha_actuacion,
-            'Descripción Actuación': act.descripcion_actuacion,
+            'Fecha ActuaciÃ³n': act.fecha_actuacion,
+            'DescripciÃ³n ActuaciÃ³n': act.descripcion_actuacion,
             'Observaciones': act.observaciones || '',
             'Archivo': act.archivo_nombre || 'Sin archivo',
             'Link Archivo': act.archivo_url ? 'VER DOCUMENTO' : 'Sin archivo'
@@ -635,22 +618,22 @@
         XLSX.utils.book_append_sheet(wb, ws, 'Actuaciones');
         const nombreArchivo = `Reporte_Cobranzas_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, nombreArchivo);
-        alert('✅ Archivo Excel descargado exitosamente\n\n📊 Organizado por:\n1️⃣ Abogado\n2️⃣ Expediente\n3️⃣ Fecha\n\n🔗 Los links son clickeables - haz click en "VER DOCUMENTO"');
+        alert('âœ… Archivo Excel descargado exitosamente\n\nðŸ“Š Organizado por:\n1ï¸âƒ£ Abogado\n2ï¸âƒ£ Expediente\n3ï¸âƒ£ Fecha\n\nðŸ”— Los links son clickeables - haz click en "VER DOCUMENTO"');
       } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error al exportar: ' + error.message);
+        alert('âŒ Error al exportar: ' + error.message);
       }
     }
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        console.log('📱 Pantalla encendida - Recargando datos del panel...');
+        console.log('ðŸ“± Pantalla encendida - Recargando datos del panel...');
         cargarDatos();
       }
     });
 
     window.addEventListener('focus', () => {
-      console.log('🔄 Ventana activa - Recargando datos del panel...');
+      console.log('ðŸ”„ Ventana activa - Recargando datos del panel...');
       cargarDatos();
     });
   </script>
