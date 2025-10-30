@@ -277,7 +277,7 @@
         if (errorExp) throw errorExp;
 
         // Filtrar por tipo (Interno/Externo) usando el área del abogado
-        let expedientesFiltrados = expedientes;
+        let expedientesFiltrados = expedientes || [];
         if (filtroTipo) {
           expedientesFiltrados = expedientes.filter(exp => {
             const areaAbogado = abogadosConArea[exp.abogado_responsable];
@@ -285,13 +285,10 @@
           });
         }
 
-        // Cargar actuaciones
+        // Cargar actuaciones - NOMBRES DE COLUMNAS CORRECTOS ✅
         let queryActuaciones = supabase
           .from('actuaciones_cobranzas')
-          .select(`
-            *,
-            expedientes_cobranzas (numero_expediente, descripcion_caso)
-          `, { count: 'exact' })
+          .select('*', { count: 'exact' })
           .order('fecha_actuacion', { ascending: false });
 
         if (filtroAbogado) queryActuaciones = queryActuaciones.eq('abogado', filtroAbogado);
@@ -301,7 +298,7 @@
         if (errorAct) throw errorAct;
 
         // Filtrar actuaciones por tipo si es necesario
-        let actuacionesFiltradas = actuaciones;
+        let actuacionesFiltradas = actuaciones || [];
         if (filtroTipo) {
           actuacionesFiltradas = actuaciones.filter(act => {
             const areaAbogado = abogadosConArea[act.abogado];
@@ -309,21 +306,22 @@
           });
         }
 
-        // Actualizar estadísticas
+        // Actualizar estadísticas - MONTO CORRECTO ✅
         document.getElementById('totalExpedientes').textContent = expedientesFiltrados.length || 0;
         document.getElementById('totalActuaciones').textContent = actuacionesFiltradas.length || 0;
         
-        const montoTotal = expedientesFiltrados.reduce((sum, exp) => sum + (exp.monto_reclamado || 0), 0);
+        const montoTotal = expedientesFiltrados.reduce((sum, exp) => sum + (parseFloat(exp.monto) || 0), 0);
         document.getElementById('montoTotal').textContent = 'Gs. ' + montoTotal.toLocaleString();
 
         const abogadosUnicos = new Set(actuacionesFiltradas.map(act => act.abogado));
         document.getElementById('abogadosActivos').textContent = abogadosUnicos.size;
 
         // Mostrar actuaciones
-        mostrarActuaciones(actuacionesFiltradas);
+        mostrarActuaciones(actuacionesFiltradas, expedientes);
 
       } catch (error) {
         console.error('Error al cargar datos:', error);
+        alert('Error al cargar datos: ' + error.message);
       }
     }
 
@@ -339,11 +337,11 @@
       return '';
     }
 
-    // Mostrar actuaciones
-    function mostrarActuaciones(actuaciones) {
+    // Mostrar actuaciones - NOMBRES DE COLUMNAS CORRECTOS ✅
+    function mostrarActuaciones(actuaciones, expedientes) {
       const lista = document.getElementById('listaActuaciones');
       
-      if (actuaciones.length === 0) {
+      if (!actuaciones || actuaciones.length === 0) {
         lista.innerHTML = '<p class="text-gray-500 text-center py-8">No hay actuaciones para mostrar</p>';
         return;
       }
@@ -353,17 +351,21 @@
       const fin = inicio + itemsPorPagina;
       const actuacionesPagina = actuaciones.slice(inicio, fin);
 
-      lista.innerHTML = actuacionesPagina.map(act => `
+      lista.innerHTML = actuacionesPagina.map(act => {
+        // Buscar el expediente correspondiente
+        const expediente = expedientes.find(e => e.id === act.expediente_cobranza_id);
+        
+        return `
         <div class="border-l-4 border-purple-500 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition">
           <div class="flex justify-between items-start flex-wrap gap-4">
             <div class="flex-1 min-w-[200px]">
               <div class="flex items-center gap-2 mb-1">
-                <span class="font-bold text-purple-600">${act.expedientes_cobranzas.numero_expediente}</span>
-                <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString()}</span>
+                <span class="font-bold text-purple-600">${expediente ? `Expte. ${expediente.num_expediente}/${expediente.anio}` : 'N/A'}</span>
+                <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
               </div>
-              <div class="text-sm text-gray-600 mb-1">${act.expedientes_cobranzas.descripcion_caso}</div>
-              <div class="font-semibold text-gray-800">${act.tipo_actuacion}</div>
-              <div class="text-sm text-gray-600 mt-1">${act.descripcion}</div>
+              ${expediente ? `<div class="text-sm text-gray-600 mb-1">${expediente.caratula}</div>` : ''}
+              <div class="text-sm text-gray-600 mt-1"><strong>📝</strong> ${act.descripcion_actuacion}</div>
+              ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">💭 ${act.observaciones}</div>` : ''}
               ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">📎 Ver documento</a>` : ''}
             </div>
             <div class="text-right">
@@ -371,11 +373,11 @@
                 <div class="text-sm font-semibold text-gray-700">${act.abogado}</div>
                 ${getBadgeTipo(act.abogado)}
               </div>
-              <div class="text-xs text-gray-500 mt-1">${new Date(act.created_at).toLocaleDateString()} ${new Date(act.created_at).toLocaleTimeString()}</div>
+              <div class="text-xs text-gray-500 mt-1">${new Date(act.fecha_registro).toLocaleDateString('es-PY')} ${new Date(act.fecha_registro).toLocaleTimeString('es-PY')}</div>
             </div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
 
       // Mostrar info de paginación
       const totalPaginas = Math.ceil(actuaciones.length / itemsPorPagina);
@@ -418,33 +420,40 @@
     // Exportar datos
     async function exportarDatos() {
       try {
-        const { data, error } = await supabase
+        const { data: actuaciones, error: actError } = await supabase
           .from('actuaciones_cobranzas')
-          .select(`
-            *,
-            expedientes_cobranzas (numero_expediente, descripcion_caso, monto_reclamado)
-          `)
+          .select('*')
           .order('fecha_actuacion', { ascending: false });
 
-        if (error) throw error;
+        if (actError) throw actError;
 
-        // Convertir a CSV
+        const { data: expedientes, error: expError } = await supabase
+          .from('expedientes_cobranzas')
+          .select('*');
+
+        if (expError) throw expError;
+
+        // Convertir a CSV con nombres correctos
         const csv = [
-          ['Fecha', 'Expediente', 'Caso', 'Tipo', 'Descripción', 'Abogado', 'Tipo Abogado', 'Monto'].join(','),
-          ...data.map(act => [
-            act.fecha_actuacion,
-            act.expedientes_cobranzas.numero_expediente,
-            act.expedientes_cobranzas.descripcion_caso.replace(/,/g, ';'),
-            act.tipo_actuacion,
-            act.descripcion.replace(/,/g, ';'),
-            act.abogado,
-            abogadosConArea[act.abogado] || '',
-            act.expedientes_cobranzas.monto_reclamado
-          ].join(','))
+          ['Fecha', 'Expediente', 'Carátula', 'Descripción', 'Observaciones', 'Abogado', 'Tipo Abogado', 'Monto', 'Archivo'].join(','),
+          ...actuaciones.map(act => {
+            const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
+            return [
+              act.fecha_actuacion,
+              exp ? `${exp.num_expediente}/${exp.anio}` : 'N/A',
+              exp ? exp.caratula.replace(/,/g, ';') : 'N/A',
+              act.descripcion_actuacion.replace(/,/g, ';'),
+              (act.observaciones || '').replace(/,/g, ';'),
+              act.abogado,
+              abogadosConArea[act.abogado] || '',
+              exp && exp.monto ? parseFloat(exp.monto) : 0,
+              act.archivo_nombre || ''
+            ].join(',');
+          })
         ].join('\n');
 
         // Descargar
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
