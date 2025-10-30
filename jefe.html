@@ -26,7 +26,6 @@
     .dark .hover\:bg-gray-100:hover { background-color: #374151 !important; }
     .dark .hover\:bg-gray-300:hover { background-color: #4b5563 !important; }
 
-    /* Animaciones para acordeones */
     .accordion-content {
       max-height: 0;
       overflow: hidden;
@@ -47,26 +46,26 @@
     <div class="container mx-auto px-4 py-4">
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-3">
-          <span class="text-3xl">âš–ï¸</span>
+          <span class="text-3xl">⚖️</span>
           <div>
-            <h1 class="text-xl font-bold">Panel de SupervisiÃ³n</h1>
-            <p class="text-sm text-purple-100">Sistema de Cobranzas - Municipalidad de AsunciÃ³n</p>
+            <h1 class="text-xl font-bold">Panel de Supervisión</h1>
+            <p class="text-sm text-purple-100">Sistema de Cobranzas - Municipalidad de Asunción</p>
           </div>
         </div>
         <div class="flex items-center gap-4">
           <button onclick="toggleModoNocturno()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
-            <span id="iconoModo">ðŸŒ™</span>
+            <span id="iconoModo">🌙</span>
             <span class="hidden sm:inline" id="textoModo">Modo Oscuro</span>
           </button>
           <div class="text-right">
             <div class="flex items-center gap-2">
-              <span>ðŸ‘¤</span>
+              <span>👤</span>
               <span id="nombreUsuario" class="font-semibold"></span>
             </div>
             <div class="text-xs text-purple-100">Supervisor</div>
           </div>
           <button onclick="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
-            <span>ðŸšª</span>
+            <span>🚪</span>
             <span class="hidden sm:inline">Salir</span>
           </button>
         </div>
@@ -75,10 +74,9 @@
   </div>
 
   <div class="container mx-auto px-4 py-8">
-    <!-- Filtros -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
       <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        <span>ðŸ”</span> Filtros
+        <span>🔍</span> Filtros
       </h2>
       <div class="grid md:grid-cols-4 gap-4">
         <div>
@@ -88,9 +86,9 @@
           </select>
         </div>
         <div>
-          <label class="block text-gray-700 font-semibold mb-2">Ãrea</label>
+          <label class="block text-gray-700 font-semibold mb-2">Área</label>
           <select id="filtroArea" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
-            <option value="">Todas las Ã¡reas</option>
+            <option value="">Todas las áreas</option>
             <option value="Civil">Civil</option>
             <option value="Penal">Penal</option>
             <option value="Laboral">Laboral</option>
@@ -99,24 +97,24 @@
             <option value="Tributario">Tributario</option>
             <option value="Interno">Interno</option>
             <option value="Externo">Externo</option>
-            <option value="AsesorÃ­a">AsesorÃ­a</option>
+            <option value="Asesoría">Asesoría</option>
           </select>
         </div>
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Tipo de Abogado</label>
           <select id="filtroTipo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="">Todos</option>
-            <option value="Interno">ðŸŸ¢ Solo Internos</option>
-            <option value="Externo">ðŸŸ  Solo Externos</option>
+            <option value="Interno">🟢 Solo Internos</option>
+            <option value="Externo">🟠 Solo Externos</option>
           </select>
         </div>
         <div>
-          <label class="block text-gray-700 font-semibold mb-2">PerÃ­odo</label>
+          <label class="block text-gray-700 font-semibold mb-2">Período</label>
           <select id="filtroPeriodo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
-            <option value="7">Ãšltimos 7 dÃ­as</option>
-            <option value="30" selected>Ãšltimos 30 dÃ­as</option>
-            <option value="90">Ãšltimos 3 meses</option>
-            <option value="365">Ãšltimo aÃ±o</option>
+            <option value="7">Últimos 7 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 3 meses</option>
+            <option value="365">Último año</option>
             <option value="0">Todo</option>
           </select>
         </div>
@@ -126,7 +124,6 @@
       </button>
     </div>
 
-    <!-- EstadÃ­sticas -->
     <div class="grid md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
         <div class="flex items-center justify-between">
@@ -134,7 +131,7 @@
             <p class="text-gray-500 text-sm font-semibold">Total Expedientes</p>
             <p id="totalExpedientes" class="text-3xl font-bold text-gray-800 mt-1">0</p>
           </div>
-          <span class="text-4xl">ðŸ“‚</span>
+          <span class="text-4xl">📂</span>
         </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
@@ -143,7 +140,7 @@
             <p class="text-gray-500 text-sm font-semibold">Total Actuaciones</p>
             <p id="totalActuaciones" class="text-3xl font-bold text-gray-800 mt-1">0</p>
           </div>
-          <span class="text-4xl">ðŸ“</span>
+          <span class="text-4xl">📝</span>
         </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
@@ -152,7 +149,7 @@
             <p class="text-gray-500 text-sm font-semibold">Monto Total</p>
             <p id="montoTotal" class="text-2xl font-bold text-gray-800 mt-1">Gs. 0</p>
           </div>
-          <span class="text-4xl">ðŸ’°</span>
+          <span class="text-4xl">💰</span>
         </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
@@ -161,12 +158,11 @@
             <p class="text-gray-500 text-sm font-semibold">Abogados Activos</p>
             <p id="abogadosActivos" class="text-3xl font-bold text-gray-800 mt-1">0</p>
           </div>
-          <span class="text-4xl">ðŸ‘¥</span>
+          <span class="text-4xl">👥</span>
         </div>
       </div>
     </div>
 
-    <!-- Contenido dinÃ¡mico -->
     <div id="contenidoPrincipal"></div>
   </div>
 
@@ -184,7 +180,7 @@
       document.documentElement.classList.toggle('dark');
       const isDark = document.documentElement.classList.contains('dark');
       localStorage.setItem('modoNocturno', isDark ? 'true' : 'false');
-      document.getElementById('iconoModo').textContent = isDark ? 'â˜€ï¸' : 'ðŸŒ™';
+      document.getElementById('iconoModo').textContent = isDark ? '☀️' : '🌙';
       document.getElementById('textoModo').textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
     }
 
@@ -192,7 +188,7 @@
       const modoGuardado = localStorage.getItem('modoNocturno');
       if (modoGuardado === 'true') {
         document.documentElement.classList.add('dark');
-        document.getElementById('iconoModo').textContent = 'â˜€ï¸';
+        document.getElementById('iconoModo').textContent = '☀️';
         document.getElementById('textoModo').textContent = 'Modo Claro';
       }
 
@@ -217,7 +213,7 @@
     });
 
     function cerrarSesion() {
-      if (confirm('Â¿EstÃ¡s seguro que querÃ©s cerrar sesiÃ³n?')) {
+      if (confirm('¿Estás seguro que querés cerrar sesión?')) {
         localStorage.removeItem('usuarioActual');
         window.location.href = 'index.html';
       }
@@ -324,9 +320,9 @@
     function getBadgeTipo(abogado) {
       const area = abogadosConArea[abogado];
       if (area === 'Interno') {
-        return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">ðŸŸ¢ INTERNO</span>';
+        return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">🟢 INTERNO</span>';
       } else if (area === 'Externo') {
-        return '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">ðŸŸ  EXTERNO</span>';
+        return '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold">🟠 EXTERNO</span>';
       }
       return '';
     }
@@ -335,16 +331,14 @@
       const contenedor = document.getElementById('contenidoPrincipal');
       
       if (filtroAbogado === '') {
-        // MODO: TODOS LOS ABOGADOS
         contenedor.innerHTML = `
-          <!-- Ãšltimos Movimientos -->
           <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span>ðŸ•</span> Ãšltimos Movimientos
+                <span>🕐</span> Últimos Movimientos
               </h2>
               <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
-                <span>ðŸ“¥</span> Exportar a Excel
+                <span>📥</span> Exportar a Excel
               </button>
             </div>
             <div class="space-y-3">
@@ -359,7 +353,7 @@
                           <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
                         </div>
                         ${exp ? `<div class="text-sm text-gray-600 mb-1">${exp.caratula}</div>` : ''}
-                        <div class="text-sm text-gray-600"><strong>ðŸ“</strong> ${act.descripcion_actuacion}</div>
+                        <div class="text-sm text-gray-600"><strong>📝</strong> ${act.descripcion_actuacion}</div>
                       </div>
                       <div class="text-right">
                         <div class="flex items-center gap-2 mb-1">
@@ -374,10 +368,9 @@
             </div>
           </div>
 
-          <!-- Vista por Abogados -->
           <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <span>ðŸ‘¥</span> Vista por Abogados
+              <span>👥</span> Vista por Abogados
             </h2>
             <div id="vistaAbogados" class="space-y-4">
               ${renderVistaAbogados(actuaciones, expedientes)}
@@ -385,15 +378,14 @@
           </div>
         `;
       } else {
-        // MODO: ABOGADO ESPECÃFICO (vista normal)
         contenedor.innerHTML = `
           <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span>ðŸ“Š</span> Actuaciones de ${filtroAbogado}
+                <span>📊</span> Actuaciones de ${filtroAbogado}
               </h2>
               <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
-                <span>ðŸ“¥</span> Exportar a Excel
+                <span>📥</span> Exportar a Excel
               </button>
             </div>
             <div class="space-y-3">
@@ -408,9 +400,9 @@
                           <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
                         </div>
                         ${exp ? `<div class="text-sm text-gray-600 mb-1">${exp.caratula}</div>` : ''}
-                        <div class="text-sm text-gray-600"><strong>ðŸ“</strong> ${act.descripcion_actuacion}</div>
-                        ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">ðŸ’­ ${act.observaciones}</div>` : ''}
-                        ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">ðŸ“Ž Ver documento</a>` : ''}
+                        <div class="text-sm text-gray-600"><strong>📝</strong> ${act.descripcion_actuacion}</div>
+                        ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">💭 ${act.observaciones}</div>` : ''}
+                        ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">📎 Ver documento</a>` : ''}
                       </div>
                       <div class="text-right">
                         <div class="text-xs text-gray-500">${new Date(act.fecha_registro).toLocaleDateString('es-PY')} ${new Date(act.fecha_registro).toLocaleTimeString('es-PY')}</div>
@@ -426,7 +418,6 @@
     }
 
     function renderVistaAbogados(actuaciones, expedientes) {
-      // Agrupar por abogado
       const porAbogado = {};
       
       expedientes.forEach(exp => {
@@ -446,16 +437,15 @@
       return abogados.map((abogado, idxAbogado) => {
         const data = porAbogado[abogado];
         const tipo = abogadosConArea[abogado];
-        const badgeTipo = tipo === 'Interno' ? 'ðŸŸ¢ INTERNO' : tipo === 'Externo' ? 'ðŸŸ  EXTERNO' : '';
+        const badgeTipo = tipo === 'Interno' ? '🟢 INTERNO' : tipo === 'Externo' ? '🟠 EXTERNO' : '';
         
         return `
           <div class="border-2 border-indigo-200 rounded-xl overflow-hidden">
-            <!-- Tarjeta Abogado -->
             <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 cursor-pointer hover:bg-indigo-100 transition" 
                  onclick="toggleAbogado(${idxAbogado})">
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                  <span class="text-3xl">ðŸ‘¤</span>
+                  <span class="text-3xl">👨</span>
                   <div>
                     <h3 class="text-xl font-bold text-gray-900">${abogado}</h3>
                     <span class="text-sm ${tipo === 'Interno' ? 'text-green-700' : 'text-orange-700'} font-semibold">${badgeTipo}</span>
@@ -464,18 +454,17 @@
                 <div class="flex items-center gap-6">
                   <div class="text-center">
                     <p class="text-sm text-gray-600">Expedientes</p>
-                    <p class="text-2xl font-bold text-indigo-600">ðŸ“‚ ${data.expedientes.length}</p>
+                    <p class="text-2xl font-bold text-indigo-600">📂 ${data.expedientes.length}</p>
                   </div>
                   <div class="text-center">
                     <p class="text-sm text-gray-600">Monto Total</p>
-                    <p class="text-xl font-bold text-green-600">ðŸ’° â‚² ${formatearMonto(data.monto)}</p>
+                    <p class="text-xl font-bold text-green-600">💰 ₲ ${formatearMonto(data.monto)}</p>
                   </div>
-                  <div id="iconAbogado${idxAbogado}" class="transition-transform duration-300">â–¼</div>
+                  <div id="iconAbogado${idxAbogado}" class="transition-transform duration-300">▼</div>
                 </div>
               </div>
             </div>
 
-            <!-- Expedientes del Abogado (colapsable) -->
             <div id="abogado${idxAbogado}" class="accordion-content bg-white">
               <div class="p-4 space-y-4">
                 ${data.expedientes.map((exp, idxExp) => {
@@ -484,33 +473,31 @@
                   
                   return `
                     <div class="border-l-4 border-blue-500 bg-blue-50 rounded-r-lg overflow-hidden">
-                      <!-- Tarjeta Expediente -->
                       <div class="p-4 cursor-pointer hover:bg-blue-100 transition" 
                            onclick="toggleExpediente(${idxAbogado}, ${idxExp})">
                         <div class="flex justify-between items-start">
                           <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
-                              <span class="text-lg font-bold text-gray-900">ðŸ“ Expte. ${exp.num_expediente}/${exp.anio}</span>
+                              <span class="text-lg font-bold text-gray-900">📝 Expte. ${exp.num_expediente}/${exp.anio}</span>
                               <span class="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">${actsExp.length} actuaciones</span>
                             </div>
                             <p class="text-gray-700 font-semibold">${exp.caratula}</p>
                             <div class="flex gap-2 mt-2 flex-wrap">
-                              ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded text-xs">ðŸ›ï¸ ${exp.juzgado}</span>` : ''}
-                              ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded text-xs">ðŸ”„ ${exp.turno}</span>` : ''}
-                              ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded text-xs">ðŸ“‹ ${exp.secretaria}</span>` : ''}
+                              ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded text-xs">🏛️ ${exp.juzgado}</span>` : ''}
+                              ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded text-xs">🔄 ${exp.turno}</span>` : ''}
+                              ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded text-xs">📋 ${exp.secretaria}</span>` : ''}
                             </div>
                             ${exp.tiene_monto && exp.monto > 0 ? `
-                              <p class="text-green-700 font-bold text-lg mt-2">ðŸ’° â‚² ${formatearMonto(exp.monto)}</p>
+                              <p class="text-green-700 font-bold text-lg mt-2">💰 ₲ ${formatearMonto(exp.monto)}</p>
                             ` : ''}
                           </div>
-                          <div id="iconExp${idxAbogado}_${idxExp}" class="transition-transform duration-300">â–¼</div>
+                          <div id="iconExp${idxAbogado}_${idxExp}" class="transition-transform duration-300">▼</div>
                         </div>
                       </div>
 
-                      <!-- Actuaciones del Expediente (colapsable) -->
                       <div id="exp${idxAbogado}_${idxExp}" class="accordion-content bg-white">
                         <div class="p-4 space-y-3 border-t-2 border-blue-200">
-                          <h4 class="font-bold text-blue-900 mb-3">ðŸ“ ACTUACIONES (mÃ¡s reciente primero):</h4>
+                          <h4 class="font-bold text-blue-900 mb-3">📝 ACTUACIONES (más reciente primero):</h4>
                           ${actsExp.length === 0 ? `
                             <p class="text-gray-500 text-sm italic">Sin actuaciones registradas</p>
                           ` : actsExp.map((act, actIdx) => `
@@ -520,22 +507,22 @@
                                   #${actsExp.length - actIdx}
                                 </span>
                                 <span class="text-sm font-semibold text-gray-600">
-                                  ðŸ“… ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
+                                  📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
                                 </span>
                               </div>
                               <p class="text-gray-900 font-medium mb-2">${act.descripcion_actuacion}</p>
                               ${act.observaciones ? `
-                                <p class="text-sm text-gray-600 italic mb-2">ðŸ’­ ${act.observaciones}</p>
+                                <p class="text-sm text-gray-600 italic mb-2">💭 ${act.observaciones}</p>
                               ` : ''}
                               ${act.archivo_nombre ? `
                                 <a href="${act.archivo_url}" target="_blank" class="flex items-center gap-2 text-indigo-700 hover:text-indigo-900 font-semibold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded transition-colors">
-                                  <span>ðŸ“Ž</span>
+                                  <span>📎</span>
                                   <span class="flex-1">${act.archivo_nombre}</span>
-                                  <span class="text-xs">â†—ï¸</span>
+                                  <span class="text-xs">↗️</span>
                                 </a>
                               ` : ''}
                               <p class="text-xs text-gray-400 mt-2">
-                                â° ${new Date(act.fecha_registro).toLocaleString('es-PY')}
+                                ⏰ ${new Date(act.fecha_registro).toLocaleString('es-PY')}
                               </p>
                             </div>
                           `).join('')}
@@ -624,25 +611,21 @@
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(datosExcel);
         
-        // Configurar anchos de columna
         ws['!cols'] = [
           { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 40 }, { wch: 25 },
           { wch: 10 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 50 },
           { wch: 30 }, { wch: 30 }, { wch: 20 }
         ];
 
-        // AGREGAR HIPERVÍNCULOS CLICKEABLES
         datosCompletos.forEach((item, index) => {
-          const fila = index + 2; // +2 porque la fila 1 es el header y empezamos en 2
-          const celda = `M${fila}`; // Columna M = "Link Archivo"
+          const fila = index + 2;
+          const celda = `M${fila}`;
           
           if (item.act.archivo_url) {
-            // Crear hipervínculo clickeable
             ws[celda].l = { 
               Target: item.act.archivo_url,
               Tooltip: "Click para abrir el documento"
             };
-            // Estilo para que se vea como link (azul y subrayado)
             ws[celda].s = {
               font: { color: { rgb: "0563C1" }, underline: true }
             };
@@ -659,7 +642,6 @@
       }
     }
 
-    // FIX: Detectar cuando la tablet vuelve a encenderse o la ventana recupera el foco
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         console.log('📱 Pantalla encendida - Recargando datos del panel...');
