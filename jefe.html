@@ -6,73 +6,43 @@
   <title>Panel del Jefe - Sistema de Cobranzas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- SheetJS para exportar a Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
-    /* Transiciones suaves para modo oscuro */
     * {
       transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
     
-    /* Clases para modo oscuro */
-    .dark body {
-      background-color: #111827;
-      color: #f9fafb;
+    .dark body { background-color: #111827; color: #f9fafb; }
+    .dark .bg-white { background-color: #1f2937 !important; }
+    .dark .bg-gray-50 { background-color: #111827 !important; }
+    .dark .text-gray-800 { color: #f9fafb !important; }
+    .dark .text-gray-700 { color: #e5e7eb !important; }
+    .dark .text-gray-600 { color: #d1d5db !important; }
+    .dark .text-gray-500 { color: #9ca3af !important; }
+    .dark .border-gray-300 { border-color: #4b5563 !important; }
+    .dark .bg-gray-100 { background-color: #374151 !important; }
+    .dark .bg-gray-200 { background-color: #4b5563 !important; }
+    .dark input, .dark select { background-color: #374151 !important; color: #f9fafb !important; }
+    .dark .hover\:bg-gray-100:hover { background-color: #374151 !important; }
+    .dark .hover\:bg-gray-300:hover { background-color: #4b5563 !important; }
+
+    /* Animaciones para acordeones */
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
     }
-    
-    .dark .bg-white {
-      background-color: #1f2937 !important;
+    .accordion-content.active {
+      max-height: 5000px;
+      transition: max-height 0.5s ease-in;
     }
-    
-    .dark .bg-gray-50 {
-      background-color: #111827 !important;
-    }
-    
-    .dark .text-gray-800 {
-      color: #f9fafb !important;
-    }
-    
-    .dark .text-gray-700 {
-      color: #e5e7eb !important;
-    }
-    
-    .dark .text-gray-600 {
-      color: #d1d5db !important;
-    }
-    
-    .dark .text-gray-500 {
-      color: #9ca3af !important;
-    }
-    
-    .dark .border-gray-300 {
-      border-color: #4b5563 !important;
-    }
-    
-    .dark .bg-gray-100 {
-      background-color: #374151 !important;
-    }
-    
-    .dark .bg-gray-200 {
-      background-color: #4b5563 !important;
-    }
-    
-    .dark input, .dark select {
-      background-color: #374151 !important;
-      color: #f9fafb !important;
-    }
-    
-    .dark .hover\:bg-gray-100:hover {
-      background-color: #374151 !important;
-    }
-    
-    .dark .hover\:bg-gray-300:hover {
-      background-color: #4b5563 !important;
+    .rotate-180 {
+      transform: rotate(180deg);
     }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
   
-  <!-- Header con usuario y cerrar sesión -->
   <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
     <div class="container mx-auto px-4 py-4">
       <div class="flex justify-between items-center">
@@ -84,12 +54,10 @@
           </div>
         </div>
         <div class="flex items-center gap-4">
-          <!-- Toggle Modo Nocturno -->
           <button onclick="toggleModoNocturno()" class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition">
             <span id="iconoModo">🌙</span>
             <span class="hidden sm:inline" id="textoModo">Modo Oscuro</span>
           </button>
-          
           <div class="text-right">
             <div class="flex items-center gap-2">
               <span>👤</span>
@@ -115,19 +83,13 @@
       <div class="grid md:grid-cols-4 gap-4">
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Abogado</label>
-          <select 
-            id="filtroAbogado" 
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
-          >
+          <select id="filtroAbogado" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="">Todos los abogados</option>
           </select>
         </div>
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Área</label>
-          <select 
-            id="filtroArea" 
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
-          >
+          <select id="filtroArea" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="">Todas las áreas</option>
             <option value="Civil">Civil</option>
             <option value="Penal">Penal</option>
@@ -142,10 +104,7 @@
         </div>
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Tipo de Abogado</label>
-          <select 
-            id="filtroTipo" 
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
-          >
+          <select id="filtroTipo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="">Todos</option>
             <option value="Interno">🟢 Solo Internos</option>
             <option value="Externo">🟠 Solo Externos</option>
@@ -153,10 +112,7 @@
         </div>
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Período</label>
-          <select 
-            id="filtroPeriodo" 
-            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
-          >
+          <select id="filtroPeriodo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
             <option value="7">Últimos 7 días</option>
             <option value="30" selected>Últimos 30 días</option>
             <option value="90">Últimos 3 meses</option>
@@ -165,10 +121,7 @@
           </select>
         </div>
       </div>
-      <button 
-        onclick="aplicarFiltros()" 
-        class="mt-4 w-full md:w-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-      >
+      <button onclick="aplicarFiltros()" class="mt-4 w-full md:w-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
         Aplicar Filtros
       </button>
     </div>
@@ -184,7 +137,6 @@
           <span class="text-4xl">📂</span>
         </div>
       </div>
-
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
         <div class="flex items-center justify-between">
           <div>
@@ -194,7 +146,6 @@
           <span class="text-4xl">📝</span>
         </div>
       </div>
-
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
         <div class="flex items-center justify-between">
           <div>
@@ -204,7 +155,6 @@
           <span class="text-4xl">💰</span>
         </div>
       </div>
-
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
         <div class="flex items-center justify-between">
           <div>
@@ -216,63 +166,29 @@
       </div>
     </div>
 
-    <!-- Lista de expedientes y actuaciones -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <span>📊</span> Actuaciones Registradas
-        </h2>
-        <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
-          <span>📥</span> Exportar a Excel
-        </button>
-      </div>
-      
-      <div id="listaActuaciones" class="space-y-3">
-        <p class="text-gray-500 text-center py-8">Cargando datos...</p>
-      </div>
-
-      <!-- Paginación -->
-      <div id="paginacion" class="mt-6 flex justify-center gap-2 hidden">
-        <button onclick="cambiarPagina(-1)" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
-          ← Anterior
-        </button>
-        <span id="infoPagina" class="px-4 py-2 font-semibold"></span>
-        <button onclick="cambiarPagina(1)" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
-          Siguiente →
-        </button>
-      </div>
-    </div>
+    <!-- Contenido dinámico -->
+    <div id="contenidoPrincipal"></div>
   </div>
 
   <script>
-    // Configuración de Supabase
     const supabaseUrl = 'https://wyxrtqudbjbwwlmqlrbc.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5eHJ0cXVkYmpid3dsbXFscmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTc2ODcsImV4cCI6MjA3Mzg3MzY4N30.vV0m-2D9Hod6t3CwW9ggFlgmMewlF0SaeuC2horX8fs';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     let usuarioActual = null;
-    let paginaActual = 1;
-    const itemsPorPagina = 20;
     let abogadosConArea = {};
-    let todosExpedientes = []; // Guardar para export
-    let todasActuaciones = []; // Guardar para export
+    let todosExpedientes = [];
+    let todasActuaciones = [];
 
-    // Modo nocturno
     function toggleModoNocturno() {
       document.documentElement.classList.toggle('dark');
       const isDark = document.documentElement.classList.contains('dark');
-      
-      // Guardar preferencia
       localStorage.setItem('modoNocturno', isDark ? 'true' : 'false');
-      
-      // Actualizar iconos y texto
       document.getElementById('iconoModo').textContent = isDark ? '☀️' : '🌙';
       document.getElementById('textoModo').textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
     }
 
-    // Verificar sesión al cargar
     window.addEventListener('DOMContentLoaded', () => {
-      // Cargar preferencia de modo nocturno
       const modoGuardado = localStorage.getItem('modoNocturno');
       if (modoGuardado === 'true') {
         document.documentElement.classList.add('dark');
@@ -287,7 +203,6 @@
       }
       
       usuarioActual = JSON.parse(usuarioGuardado);
-      
       if (usuarioActual.rol !== 'jefe') {
         alert('Acceso no autorizado');
         localStorage.removeItem('usuarioActual');
@@ -296,7 +211,6 @@
       }
 
       document.getElementById('nombreUsuario').textContent = usuarioActual.nombre_completo;
-
       cargarAbogados();
       cargarDatos();
       suscribirCambios();
@@ -323,7 +237,6 @@
         const select = document.getElementById('filtroAbogado');
         data.forEach(abogado => {
           abogadosConArea[abogado.nombre_completo] = abogado.area;
-          
           const option = document.createElement('option');
           option.value = abogado.nombre_completo;
           option.textContent = abogado.nombre_completo;
@@ -348,16 +261,12 @@
           fechaLimite = fecha.toISOString();
         }
 
-        // Cargar expedientes
-        let queryExpedientes = supabase
-          .from('expedientes_cobranzas')
-          .select('*', { count: 'exact' });
-
+        let queryExpedientes = supabase.from('expedientes_cobranzas').select('*', { count: 'exact' });
         if (filtroAbogado) queryExpedientes = queryExpedientes.eq('abogado_responsable', filtroAbogado);
         if (filtroArea) queryExpedientes = queryExpedientes.eq('area', filtroArea);
         if (fechaLimite) queryExpedientes = queryExpedientes.gte('created_at', fechaLimite);
 
-        const { data: expedientes, count: countExpedientes, error: errorExp } = await queryExpedientes;
+        const { data: expedientes, error: errorExp } = await queryExpedientes;
         if (errorExp) throw errorExp;
 
         let expedientesFiltrados = expedientes || [];
@@ -368,7 +277,6 @@
           });
         }
 
-        // Cargar actuaciones
         let queryActuaciones = supabase
           .from('actuaciones_cobranzas')
           .select('*', { count: 'exact' })
@@ -377,7 +285,7 @@
         if (filtroAbogado) queryActuaciones = queryActuaciones.eq('abogado', filtroAbogado);
         if (fechaLimite) queryActuaciones = queryActuaciones.gte('fecha_actuacion', fechaLimite);
 
-        const { data: actuaciones, count: countActuaciones, error: errorAct } = await queryActuaciones;
+        const { data: actuaciones, error: errorAct } = await queryActuaciones;
         if (errorAct) throw errorAct;
 
         let actuacionesFiltradas = actuaciones || [];
@@ -388,21 +296,19 @@
           });
         }
 
-        // Guardar para export
         todosExpedientes = expedientesFiltrados;
         todasActuaciones = actuacionesFiltradas;
 
-        // Actualizar estadísticas
         document.getElementById('totalExpedientes').textContent = expedientesFiltrados.length || 0;
         document.getElementById('totalActuaciones').textContent = actuacionesFiltradas.length || 0;
         
         const montoTotal = expedientesFiltrados.reduce((sum, exp) => sum + (parseFloat(exp.monto) || 0), 0);
-        document.getElementById('montoTotal').textContent = 'Gs. ' + montoTotal.toLocaleString();
+        document.getElementById('montoTotal').textContent = 'Gs. ' + montoTotal.toLocaleString('es-PY');
 
         const abogadosUnicos = new Set(actuacionesFiltradas.map(act => act.abogado));
         document.getElementById('abogadosActivos').textContent = abogadosUnicos.size;
 
-        mostrarActuaciones(actuacionesFiltradas, expedientes);
+        renderContenido(filtroAbogado, actuacionesFiltradas, expedientesFiltrados);
 
       } catch (error) {
         console.error('Error al cargar datos:', error);
@@ -410,9 +316,13 @@
       }
     }
 
+    function formatearMonto(monto) {
+      if (!monto || monto === 0) return '';
+      return parseFloat(monto).toLocaleString('es-PY');
+    }
+
     function getBadgeTipo(abogado) {
       const area = abogadosConArea[abogado];
-      
       if (area === 'Interno') {
         return '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">🟢 INTERNO</span>';
       } else if (area === 'Externo') {
@@ -421,62 +331,241 @@
       return '';
     }
 
-    function mostrarActuaciones(actuaciones, expedientes) {
-      const lista = document.getElementById('listaActuaciones');
+    function renderContenido(filtroAbogado, actuaciones, expedientes) {
+      const contenedor = document.getElementById('contenidoPrincipal');
       
-      if (!actuaciones || actuaciones.length === 0) {
-        lista.innerHTML = '<p class="text-gray-500 text-center py-8">No hay actuaciones para mostrar</p>';
-        return;
-      }
-
-      const inicio = (paginaActual - 1) * itemsPorPagina;
-      const fin = inicio + itemsPorPagina;
-      const actuacionesPagina = actuaciones.slice(inicio, fin);
-
-      lista.innerHTML = actuacionesPagina.map(act => {
-        const expediente = expedientes.find(e => e.id === act.expediente_cobranza_id);
-        
-        return `
-        <div class="border-l-4 border-purple-500 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition">
-          <div class="flex justify-between items-start flex-wrap gap-4">
-            <div class="flex-1 min-w-[200px]">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-bold text-purple-600">${expediente ? `Expte. ${expediente.num_expediente}/${expediente.anio}` : 'N/A'}</span>
-                <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
-              </div>
-              ${expediente ? `<div class="text-sm text-gray-600 mb-1">${expediente.caratula}</div>` : ''}
-              <div class="text-sm text-gray-600 mt-1"><strong>📝</strong> ${act.descripcion_actuacion}</div>
-              ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">💭 ${act.observaciones}</div>` : ''}
-              ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">📎 Ver documento</a>` : ''}
+      if (filtroAbogado === '') {
+        // MODO: TODOS LOS ABOGADOS
+        contenedor.innerHTML = `
+          <!-- Últimos Movimientos -->
+          <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span>🕐</span> Últimos Movimientos
+              </h2>
+              <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
+                <span>📥</span> Exportar a Excel
+              </button>
             </div>
-            <div class="text-right">
-              <div class="flex items-center gap-2 justify-end mb-1">
-                <div class="text-sm font-semibold text-gray-700">${act.abogado}</div>
-                ${getBadgeTipo(act.abogado)}
-              </div>
-              <div class="text-xs text-gray-500 mt-1">${new Date(act.fecha_registro).toLocaleDateString('es-PY')} ${new Date(act.fecha_registro).toLocaleTimeString('es-PY')}</div>
+            <div class="space-y-3">
+              ${actuaciones.slice(0, 10).map(act => {
+                const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
+                return `
+                  <div class="border-l-4 border-purple-500 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition">
+                    <div class="flex justify-between items-start gap-4">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="font-bold text-purple-600">${exp ? `Expte. ${exp.num_expediente}/${exp.anio}` : 'N/A'}</span>
+                          <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
+                        </div>
+                        ${exp ? `<div class="text-sm text-gray-600 mb-1">${exp.caratula}</div>` : ''}
+                        <div class="text-sm text-gray-600"><strong>📝</strong> ${act.descripcion_actuacion}</div>
+                      </div>
+                      <div class="text-right">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-sm font-semibold">${act.abogado}</span>
+                          ${getBadgeTipo(act.abogado)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
           </div>
-        </div>
-      `}).join('');
 
-      const totalPaginas = Math.ceil(actuaciones.length / itemsPorPagina);
-      if (totalPaginas > 1) {
-        document.getElementById('paginacion').classList.remove('hidden');
-        document.getElementById('infoPagina').textContent = `Página ${paginaActual} de ${totalPaginas}`;
+          <!-- Vista por Abogados -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <span>👥</span> Vista por Abogados
+            </h2>
+            <div id="vistaAbogados" class="space-y-4">
+              ${renderVistaAbogados(actuaciones, expedientes)}
+            </div>
+          </div>
+        `;
       } else {
-        document.getElementById('paginacion').classList.add('hidden');
+        // MODO: ABOGADO ESPECÍFICO (vista normal)
+        contenedor.innerHTML = `
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span>📊</span> Actuaciones de ${filtroAbogado}
+              </h2>
+              <button onclick="exportarAExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
+                <span>📥</span> Exportar a Excel
+              </button>
+            </div>
+            <div class="space-y-3">
+              ${actuaciones.map(act => {
+                const exp = expedientes.find(e => e.id === act.expediente_cobranza_id);
+                return `
+                  <div class="border-l-4 border-purple-500 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition">
+                    <div class="flex justify-between items-start gap-4">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="font-bold text-purple-600">${exp ? `Expte. ${exp.num_expediente}/${exp.anio}` : 'N/A'}</span>
+                          <span class="text-sm text-gray-500">${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}</span>
+                        </div>
+                        ${exp ? `<div class="text-sm text-gray-600 mb-1">${exp.caratula}</div>` : ''}
+                        <div class="text-sm text-gray-600"><strong>📝</strong> ${act.descripcion_actuacion}</div>
+                        ${act.observaciones ? `<div class="text-xs text-gray-500 mt-1 italic">💭 ${act.observaciones}</div>` : ''}
+                        ${act.archivo_url ? `<a href="${act.archivo_url}" target="_blank" class="text-blue-600 text-sm hover:underline mt-1 inline-block">📎 Ver documento</a>` : ''}
+                      </div>
+                      <div class="text-right">
+                        <div class="text-xs text-gray-500">${new Date(act.fecha_registro).toLocaleDateString('es-PY')} ${new Date(act.fecha_registro).toLocaleTimeString('es-PY')}</div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
       }
+    }
+
+    function renderVistaAbogados(actuaciones, expedientes) {
+      // Agrupar por abogado
+      const porAbogado = {};
+      
+      expedientes.forEach(exp => {
+        const abogado = exp.abogado_responsable;
+        if (!porAbogado[abogado]) {
+          porAbogado[abogado] = {
+            expedientes: [],
+            monto: 0
+          };
+        }
+        porAbogado[abogado].expedientes.push(exp);
+        porAbogado[abogado].monto += parseFloat(exp.monto) || 0;
+      });
+
+      const abogados = Object.keys(porAbogado).sort();
+
+      return abogados.map((abogado, idxAbogado) => {
+        const data = porAbogado[abogado];
+        const tipo = abogadosConArea[abogado];
+        const badgeTipo = tipo === 'Interno' ? '🟢 INTERNO' : tipo === 'Externo' ? '🟠 EXTERNO' : '';
+        
+        return `
+          <div class="border-2 border-indigo-200 rounded-xl overflow-hidden">
+            <!-- Tarjeta Abogado -->
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 cursor-pointer hover:bg-indigo-100 transition" 
+                 onclick="toggleAbogado(${idxAbogado})">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                  <span class="text-3xl">👤</span>
+                  <div>
+                    <h3 class="text-xl font-bold text-gray-900">${abogado}</h3>
+                    <span class="text-sm ${tipo === 'Interno' ? 'text-green-700' : 'text-orange-700'} font-semibold">${badgeTipo}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-6">
+                  <div class="text-center">
+                    <p class="text-sm text-gray-600">Expedientes</p>
+                    <p class="text-2xl font-bold text-indigo-600">📂 ${data.expedientes.length}</p>
+                  </div>
+                  <div class="text-center">
+                    <p class="text-sm text-gray-600">Monto Total</p>
+                    <p class="text-xl font-bold text-green-600">💰 ₲ ${formatearMonto(data.monto)}</p>
+                  </div>
+                  <div id="iconAbogado${idxAbogado}" class="transition-transform duration-300">▼</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expedientes del Abogado (colapsable) -->
+            <div id="abogado${idxAbogado}" class="accordion-content bg-white">
+              <div class="p-4 space-y-4">
+                ${data.expedientes.map((exp, idxExp) => {
+                  const actsExp = actuaciones.filter(a => a.expediente_cobranza_id === exp.id)
+                    .sort((a, b) => new Date(b.fecha_actuacion) - new Date(a.fecha_actuacion));
+                  
+                  return `
+                    <div class="border-l-4 border-blue-500 bg-blue-50 rounded-r-lg overflow-hidden">
+                      <!-- Tarjeta Expediente -->
+                      <div class="p-4 cursor-pointer hover:bg-blue-100 transition" 
+                           onclick="toggleExpediente(${idxAbogado}, ${idxExp})">
+                        <div class="flex justify-between items-start">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                              <span class="text-lg font-bold text-gray-900">📁 Expte. ${exp.num_expediente}/${exp.anio}</span>
+                              <span class="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">${actsExp.length} actuaciones</span>
+                            </div>
+                            <p class="text-gray-700 font-semibold">${exp.caratula}</p>
+                            <div class="flex gap-2 mt-2 flex-wrap">
+                              ${exp.juzgado ? `<span class="bg-blue-100 px-2 py-1 rounded text-xs">🏛️ ${exp.juzgado}</span>` : ''}
+                              ${exp.turno ? `<span class="bg-green-100 px-2 py-1 rounded text-xs">🔄 ${exp.turno}</span>` : ''}
+                              ${exp.secretaria ? `<span class="bg-purple-100 px-2 py-1 rounded text-xs">📋 ${exp.secretaria}</span>` : ''}
+                            </div>
+                            ${exp.tiene_monto && exp.monto > 0 ? `
+                              <p class="text-green-700 font-bold text-lg mt-2">💰 ₲ ${formatearMonto(exp.monto)}</p>
+                            ` : ''}
+                          </div>
+                          <div id="iconExp${idxAbogado}_${idxExp}" class="transition-transform duration-300">▼</div>
+                        </div>
+                      </div>
+
+                      <!-- Actuaciones del Expediente (colapsable) -->
+                      <div id="exp${idxAbogado}_${idxExp}" class="accordion-content bg-white">
+                        <div class="p-4 space-y-3 border-t-2 border-blue-200">
+                          <h4 class="font-bold text-blue-900 mb-3">📝 ACTUACIONES (más reciente primero):</h4>
+                          ${actsExp.length === 0 ? `
+                            <p class="text-gray-500 text-sm italic">Sin actuaciones registradas</p>
+                          ` : actsExp.map((act, actIdx) => `
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div class="flex justify-between items-start mb-2">
+                                <span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded">
+                                  #${actsExp.length - actIdx}
+                                </span>
+                                <span class="text-sm font-semibold text-gray-600">
+                                  📅 ${new Date(act.fecha_actuacion).toLocaleDateString('es-PY')}
+                                </span>
+                              </div>
+                              <p class="text-gray-900 font-medium mb-2">${act.descripcion_actuacion}</p>
+                              ${act.observaciones ? `
+                                <p class="text-sm text-gray-600 italic mb-2">💭 ${act.observaciones}</p>
+                              ` : ''}
+                              ${act.archivo_nombre ? `
+                                <a href="${act.archivo_url}" target="_blank" class="flex items-center gap-2 text-indigo-700 hover:text-indigo-900 font-semibold text-sm bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded transition-colors">
+                                  <span>📎</span>
+                                  <span class="flex-1">${act.archivo_nombre}</span>
+                                  <span class="text-xs">↗️</span>
+                                </a>
+                              ` : ''}
+                              <p class="text-xs text-gray-400 mt-2">
+                                ⏰ ${new Date(act.fecha_registro).toLocaleString('es-PY')}
+                              </p>
+                            </div>
+                          `).join('')}
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleAbogado(idx) {
+      const content = document.getElementById(`abogado${idx}`);
+      const icon = document.getElementById(`iconAbogado${idx}`);
+      content.classList.toggle('active');
+      icon.classList.toggle('rotate-180');
+    }
+
+    function toggleExpediente(idxAbogado, idxExp) {
+      const content = document.getElementById(`exp${idxAbogado}_${idxExp}`);
+      const icon = document.getElementById(`iconExp${idxAbogado}_${idxExp}`);
+      content.classList.toggle('active');
+      icon.classList.toggle('rotate-180');
     }
 
     function aplicarFiltros() {
-      paginaActual = 1;
-      cargarDatos();
-    }
-
-    function cambiarPagina(direccion) {
-      paginaActual += direccion;
-      if (paginaActual < 1) paginaActual = 1;
       cargarDatos();
     }
 
@@ -494,69 +583,61 @@
         .subscribe();
     }
 
-    // NUEVA FUNCIÓN: Exportar a Excel con todos los campos
     async function exportarAExcel() {
       try {
-        console.log('Exportando a Excel...');
-
-        // Crear datos para Excel con TODOS los campos solicitados
-        const datosExcel = todasActuaciones.map(act => {
+        const datosCompletos = todasActuaciones.map(act => {
           const exp = todosExpedientes.find(e => e.id === act.expediente_cobranza_id);
-          
           return {
-            'Fecha Actuación': act.fecha_actuacion,
-            'N° Expediente': exp ? `${exp.num_expediente}/${exp.anio}` : 'N/A',
+            act, exp,
+            abogado: act.abogado,
+            tipo: abogadosConArea[act.abogado] || 'N/A',
+            numExpediente: exp ? `${exp.num_expediente}/${exp.anio}` : 'N/A',
+            fecha: act.fecha_actuacion
+          };
+        });
+
+        datosCompletos.sort((a, b) => {
+          if (a.abogado !== b.abogado) return a.abogado.localeCompare(b.abogado);
+          if (a.numExpediente !== b.numExpediente) return a.numExpediente.localeCompare(b.numExpediente);
+          return new Date(b.fecha) - new Date(a.fecha);
+        });
+
+        const datosExcel = datosCompletos.map(item => {
+          const { act, exp } = item;
+          return {
+            'Abogado': act.abogado,
+            'Tipo Abogado': item.tipo,
+            'N° Expediente': item.numExpediente,
             'Carátula': exp ? exp.caratula : 'N/A',
             'Juzgado': exp && exp.juzgado ? exp.juzgado : 'N/A',
             'Turno': exp && exp.turno ? exp.turno : 'N/A',
             'Secretaría': exp && exp.secretaria ? exp.secretaria : 'N/A',
-            'Abogado': act.abogado,
-            'Tipo Abogado': abogadosConArea[act.abogado] || 'N/A',
+            'Monto (Gs)': exp && exp.monto ? parseFloat(exp.monto) : 0,
+            'Fecha Actuación': act.fecha_actuacion,
             'Descripción Actuación': act.descripcion_actuacion,
             'Observaciones': act.observaciones || '',
-            'Monto (Gs)': exp && exp.monto ? parseFloat(exp.monto) : 0,
             'Archivo': act.archivo_nombre || 'Sin archivo',
             'Link Archivo': act.archivo_url || ''
           };
         });
 
-        // Crear libro de Excel
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(datosExcel);
-
-        // Ajustar ancho de columnas
-        const columnWidths = [
-          { wch: 12 }, // Fecha
-          { wch: 15 }, // N° Expediente
-          { wch: 40 }, // Carátula
-          { wch: 25 }, // Juzgado
-          { wch: 10 }, // Turno
-          { wch: 20 }, // Secretaría
-          { wch: 25 }, // Abogado
-          { wch: 15 }, // Tipo
-          { wch: 50 }, // Descripción
-          { wch: 30 }, // Observaciones
-          { wch: 15 }, // Monto
-          { wch: 30 }, // Archivo
-          { wch: 60 }  // Link
+        ws['!cols'] = [
+          { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 40 }, { wch: 25 },
+          { wch: 10 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 50 },
+          { wch: 30 }, { wch: 30 }, { wch: 60 }
         ];
-        ws['!cols'] = columnWidths;
-
-        // Agregar la hoja al libro
         XLSX.utils.book_append_sheet(wb, ws, 'Actuaciones');
-
-        // Generar y descargar archivo
         const nombreArchivo = `Reporte_Cobranzas_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, nombreArchivo);
-
-        console.log('Archivo Excel generado:', nombreArchivo);
-        alert('✅ Archivo Excel descargado exitosamente');
-
+        alert('✅ Archivo Excel descargado exitosamente\n\n📊 Organizado por:\n1️⃣ Abogado\n2️⃣ Expediente\n3️⃣ Fecha');
       } catch (error) {
-        console.error('Error al exportar a Excel:', error);
+        console.error('Error:', error);
         alert('❌ Error al exportar: ' + error.message);
       }
     }
   </script>
 </body>
 </html>
+ENDFILE
