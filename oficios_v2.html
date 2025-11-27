@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Oficios y Cédulas - DAJ</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    .tree-line { border-left: 2px solid #cbd5e1; margin-left: 20px; padding-left: 20px; }
+    .tree-item::before { content: ''; position: absolute; left: -22px; top: 50%; width: 20px; height: 2px; background: #cbd5e1; }
+    .tree-item { position: relative; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div id="app">
+    <div class="min-h-screen flex items-center justify-center">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-4 text-gray-600">Cargando Sistema...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // CONFIGURACIÓN DE SUPABASE
+    // ==========================================
+    const SUPABASE_URL = 'https://wyxrtqudbjbwwlmqlrbc.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5eHJ0cXVkYmpid3dsbXFscmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTc2ODcsImV4cCI6MjA3Mzg3MzY4N30.vV0m-2D9Hod6t3CwW9ggFlgmMewlF0SaeuC2horX8fs';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ==========================================
+    // ESTRUCTURA DE TIPOS Y SUBTIPOS
+    // ==========================================
+    const TIPOS_DOCUMENTO = {
+      'oficio': {
+        nombre: 'OFICIO',
+        icono: '📋',
+        color: 'blue',
+        subtipos: [
+          { valor: 'juzgado', texto: 'Juzgado' },
+          { valor: 'fiscalia', texto: 'Fiscalía' },
+          { valor: 'tribunal', texto: 'Tribunal' },
+          { valor: 'amparo', texto: 'Amparo' }
+        ]
+      },
+      'cedula': {
+        nombre: 'CÉDULA DE NOTIFICACIÓN',
+        icono: '📜',
+        color: 'purple',
+        subtipos: [
+          { valor: 'inconstitucionalidad', texto: 'Acción de Inconstitucionalidad' },
+          { valor: 'juzgado', texto: 'Juzgado' },
+          { valor: 'tribunal', texto: 'Tribunal' },
+          { valor: 'amparo', texto: 'Amparo' }
+        ]
+      }
+    };
+
+    // ==========================================
+    // ESTADOS PREDEFINIDOS
+    // ==========================================
+    const ESTADOS = [
+      { valor: 'borrador', texto: 'Borrador', color: 'bg-gray-100 text-gray-800', icono: '📝' },
+      { valor: 'pendiente', texto: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icono: '⏳' },
+      { valor: 'remitido', texto: 'Remitido', color: 'bg-blue-100 text-blue-800', icono: '📤' },
+      { valor: 'esperando', texto: 'Esperando Respuesta', color: 'bg-purple-100 text-purple-800', icono: '⏰' },
+      { valor: 'recibido', texto: 'Respuesta Recibida', color: 'bg-indigo-100 text-indigo-800', icono: '📥' },
+      { valor: 'firmado', texto: 'Firmado', color: 'bg-green-100 text-green-800', icono: '✅' },
+      { valor: 'derivado', texto: 'Derivado', color: 'bg-orange-100 text-orange-800', icono: '↪️' },
+      { valor: 'archivado', texto: 'Archivado', color: 'bg-slate-100 text-slate-800', icono: '📁' }
+    ];
+
+    // ==========================================
+    // VARIABLES GLOBALES
+    // ==========================================
+    let casos = [];
+    let movimientos = [];
+    let vistaActual = 'lista';
+    let casoSeleccionado = null;
+    let filtroTipo = 'todos';
+    let filtroSubtipo = 'todos';
+    let filtroEstado = 'todos';
+    let busqueda = '';
+    let casosExpandidos = new Set();
+
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+    async function init() {
+      console.log('Iniciando Sistema de Oficios y Cédulas...');
+      await cargarDatos();
+      renderApp();
+      suscribirTiempoReal();
+    }
+
+    // ==========================================
+    // CARGAR DATOS
+    // ==========================================
+    async function cargarDatos() {
+      try {
+        // Cargar casos
+        const { data: casosData, error: casosError } = await supabase
+          .from('casos_daj')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (casosError) throw casosError;
+        casos = casosData || [];
+
+        // Cargar movimientos de todos los casos
+        if (casos.length > 0) {
+          const casoIds = casos.map(c => c.id);
+          const { data: movData, error: movError } = await supabase
+            .from('movimientos_daj')
+            .select('*')
+            .in('caso_id', casoIds)
+            .order('created_at', { ascending: true });
+          
+          if (!movError) {
+            movimientos = movData || [];
+          }
+        }
+
+        console.log('Datos cargados:', casos.length, 'casos,', movimientos.length, 'movimientos');
+      } catch (error) {
+        console.error('Error cargando datos:', error);
+        alert('Error al cargar datos: ' + error.message);
+      }
+    }
+
+    // ==========================================
+    // TIEMPO REAL
+    // ==========================================
+    function suscribirTiempoReal() {
+      supabase
+        .channel('daj_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'casos_daj' },
+          () => { cargarDatos().then(() => renderVista()); }
+        )
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'movimientos_daj' },
+          () => { cargarDatos().then(() => renderVista()); }
+        )
+        .subscribe();
+    }
+
+    // ==========================================
+    // CONFIGURACIÓN S3
+    // ==========================================
+    const S3_BUCKET = 'documentos-daj-muni';
+    const S3_REGION = 'us-east-2';
+    const S3_URL = `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com`;
+
+    // ==========================================
+    // SUBIR ARCHIVO A S3
+    // ==========================================
+    async function subirArchivo(file, tipo, subtipo, casoId) {
+      const carpeta = `${tipo}/${subtipo}/${casoId}`;
+      const fileName = `${carpeta}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const fileUrl = `${S3_URL}/${fileName}`;
+      
+      try {
+        const response = await fetch(fileUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Error subiendo archivo a S3');
+        }
+        
+        return fileUrl;
+      } catch (error) {
+        console.error('Error S3:', error);
+        throw error;
+      }
+    }
+
+    // ==========================================
+    // CREAR CASO
+    // ==========================================
+    async function crearCaso(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const boton = form.querySelector('button[type="submit"]');
+      
+      boton.disabled = true;
+      boton.innerHTML = '⏳ Creando...';
+
+      try {
+        const tipo = formData.get('tipo');
+        const subtipo = formData.get('subtipo');
+        
+        const nuevoCaso = {
+          tipo: tipo,
+          subtipo: subtipo,
+          titulo: formData.get('titulo').trim(),
+          numero_expediente: formData.get('numeroExpediente')?.trim() || null,
+          descripcion: formData.get('descripcion')?.trim() || '',
+          estado: 'borrador'
+        };
+
+        const { data: caso, error } = await supabase
+          .from('casos_daj')
+          .insert([nuevoCaso])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Si hay archivo inicial, crear movimiento
+        const archivo = formData.get('archivo');
+        if (archivo && archivo.size > 0) {
+          const url = await subirArchivo(archivo, tipo, subtipo, caso.id);
+          await supabase.from('movimientos_daj').insert([{
+            caso_id: caso.id,
+            tipo_movimiento: 'creacion',
+            descripcion: 'Documento inicial',
+            archivo_nombre: archivo.name,
+            archivo_url: url
+          }]);
+        }
+
+        alert('✅ Caso creado exitosamente');
+        await cargarDatos();
+        vistaActual = 'lista';
+        renderApp();
+
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      } finally {
+        boton.disabled = false;
+        boton.innerHTML = '✅ Crear Caso';
+      }
+    }
+
+    // ==========================================
+    // AGREGAR MOVIMIENTO
+    // ==========================================
+    async function agregarMovimiento(event, casoId) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const boton = form.querySelector('button[type="submit"]');
+      const caso = casos.find(c => c.id === casoId);
+      
+      boton.disabled = true;
+      boton.innerHTML = '⏳ Guardando...';
+
+      try {
+        const archivo = formData.get('archivo');
+        let archivoUrl = null;
+        let archivoNombre = null;
+
+        if (archivo && archivo.size > 0) {
+          archivoUrl = await subirArchivo(archivo, caso.tipo, caso.subtipo, casoId);
+          archivoNombre = archivo.name;
+        }
+
+        const nuevoMovimiento = {
+          caso_id: casoId,
+          tipo_movimiento: formData.get('tipoMovimiento'),
+          descripcion: formData.get('descripcion').trim(),
+          archivo_nombre: archivoNombre,
+          archivo_url: archivoUrl
+        };
+
+        const { error } = await supabase
+          .from('movimientos_daj')
+          .insert([nuevoMovimiento]);
+
+        if (error) throw error;
+
+        // Actualizar estado del caso si se especifica
+        const nuevoEstado = formData.get('nuevoEstado');
+        if (nuevoEstado && nuevoEstado !== caso.estado) {
+          await supabase
+            .from('casos_daj')
+            .update({ estado: nuevoEstado, updated_at: new Date().toISOString() })
+            .eq('id', casoId);
+        }
+
+        form.reset();
+        await cargarDatos();
+        verCaso(casoId);
+
+      } catch (error) {
+        alert('Error: ' + error.message);
+      } finally {
+        boton.disabled = false;
+        boton.innerHTML = '📤 Agregar Movimiento';
+      }
+    }
+
+    // ==========================================
+    // ACTUALIZAR ESTADO
+    // ==========================================
+    async function actualizarEstado(casoId, nuevoEstado) {
+      try {
+        const { error } = await supabase
+          .from('casos_daj')
+          .update({ estado: nuevoEstado, updated_at: new Date().toISOString() })
+          .eq('id', casoId);
+
+        if (error) throw error;
+        await cargarDatos();
+        renderVista();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // ==========================================
+    // GENERAR BACKUP SEMANAL
+    // ==========================================
+    async function generarBackup() {
+      const boton = event.target;
+      boton.disabled = true;
+      boton.innerHTML = '⏳ Generando backup...';
+
+      try {
+        const zip = new JSZip();
+        const fecha = new Date().toISOString().split('T')[0];
+        
+        // 1. Crear JSON con toda la base de datos
+        const baseDatos = {
+          fecha_generacion: new Date().toISOString(),
+          casos: casos,
+          movimientos: movimientos,
+          tipos: TIPOS_DOCUMENTO,
+          estados: ESTADOS
+        };
+        zip.file('base_datos.json', JSON.stringify(baseDatos, null, 2));
+
+        // 2. Crear estructura de carpetas y archivo índice
+        let indice = `BACKUP SEMANAL - DAJ\nFecha: ${fecha}\n${'='.repeat(50)}\n\n`;
+        
+        // Organizar por tipo y subtipo
+        for (const [tipoKey, tipoInfo] of Object.entries(TIPOS_DOCUMENTO)) {
+          const casosTipo = casos.filter(c => c.tipo === tipoKey);
+          if (casosTipo.length === 0) continue;
+
+          indice += `\n${tipoInfo.icono} ${tipoInfo.nombre}\n${'─'.repeat(40)}\n`;
+          
+          for (const subtipo of tipoInfo.subtipos) {
+            const casosSubtipo = casosTipo.filter(c => c.subtipo === subtipo.valor);
+            if (casosSubtipo.length === 0) continue;
+
+            indice += `\n  📂 ${subtipo.texto} (${casosSubtipo.length} casos)\n`;
+            
+            const carpetaBase = `${tipoInfo.nombre}/${subtipo.texto}`;
+            
+            for (const caso of casosSubtipo) {
+              const movsCaso = movimientos.filter(m => m.caso_id === caso.id);
+              const estadoInfo = ESTADOS.find(e => e.valor === caso.estado) || { texto: caso.estado };
+              
+              indice += `\n     📁 ${caso.titulo}\n`;
+              indice += `        Expediente: ${caso.numero_expediente || 'S/N'}\n`;
+              indice += `        Estado: ${estadoInfo.texto}\n`;
+              indice += `        Movimientos: ${movsCaso.length}\n`;
+              
+              // Crear carpeta del caso
+              const carpetaCaso = `${carpetaBase}/${caso.numero_expediente || caso.id}`;
+              
+              // Crear archivo de info del caso
+              let infoCaso = `CASO: ${caso.titulo}\n`;
+              infoCaso += `Expediente: ${caso.numero_expediente || 'S/N'}\n`;
+              infoCaso += `Tipo: ${tipoInfo.nombre}\n`;
+              infoCaso += `Subtipo: ${subtipo.texto}\n`;
+              infoCaso += `Estado: ${estadoInfo.texto}\n`;
+              infoCaso += `Descripción: ${caso.descripcion || '-'}\n`;
+              infoCaso += `Creado: ${new Date(caso.created_at).toLocaleString('es-PY')}\n`;
+              infoCaso += `\n${'─'.repeat(40)}\nHISTORIAL DE MOVIMIENTOS:\n${'─'.repeat(40)}\n\n`;
+              
+              movsCaso.forEach((mov, idx) => {
+                const tipoMov = mov.tipo_movimiento || 'movimiento';
+                infoCaso += `${idx + 1}. [${new Date(mov.created_at).toLocaleString('es-PY')}]\n`;
+                infoCaso += `   Tipo: ${tipoMov}\n`;
+                infoCaso += `   Descripción: ${mov.descripcion}\n`;
+                if (mov.archivo_nombre) {
+                  infoCaso += `   Archivo: ${mov.archivo_nombre}\n`;
+                  infoCaso += `   URL: ${mov.archivo_url}\n`;
+                  indice += `           📄 ${mov.archivo_nombre}\n`;
+                }
+                infoCaso += '\n';
+              });
+              
+              zip.file(`${carpetaCaso}/INFO_CASO.txt`, infoCaso);
+              
+              // Crear archivo con links
+              if (movsCaso.some(m => m.archivo_url)) {
+                let links = `LINKS DE ARCHIVOS - ${caso.titulo}\n${'='.repeat(50)}\n\n`;
+                movsCaso.filter(m => m.archivo_url).forEach((mov, idx) => {
+                  links += `${idx + 1}. ${mov.archivo_nombre}\n`;
+                  links += `   ${mov.archivo_url}\n\n`;
+                });
+                zip.file(`${carpetaCaso}/LINKS_ARCHIVOS.txt`, links);
+              }
+            }
+          }
+        }
+
+        // 3. Agregar índice general
+        zip.file('INDICE_GENERAL.txt', indice);
+
+        // 4. Crear Excel resumen
+        const datosExcel = casos.map(c => {
+          const tipoInfo = TIPOS_DOCUMENTO[c.tipo] || { nombre: c.tipo };
+          const subtipoInfo = tipoInfo.subtipos?.find(s => s.valor === c.subtipo) || { texto: c.subtipo };
+          const estadoInfo = ESTADOS.find(e => e.valor === c.estado) || { texto: c.estado };
+          const movsCaso = movimientos.filter(m => m.caso_id === c.id);
+          
+          return {
+            'Tipo': tipoInfo.nombre,
+            'Subtipo': subtipoInfo.texto,
+            'Título': c.titulo,
+            'Expediente': c.numero_expediente || '-',
+            'Estado': estadoInfo.texto,
+            'Descripción': c.descripcion || '-',
+            'Fecha Creación': new Date(c.created_at).toLocaleDateString('es-PY'),
+            'Última Actualización': c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-PY') : '-',
+            'Cant. Movimientos': movsCaso.length,
+            'Archivos': movsCaso.filter(m => m.archivo_url).map(m => m.archivo_nombre).join(' | '),
+            'Links': movsCaso.filter(m => m.archivo_url).map(m => m.archivo_url).join(' | ')
+          };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(datosExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Casos');
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        zip.file(`RESUMEN_${fecha}.xlsx`, excelBuffer);
+
+        // 5. Generar y descargar ZIP
+        const contenido = await zip.generateAsync({ type: 'blob' });
+        saveAs(contenido, `Backup_DAJ_${fecha}.zip`);
+
+        alert('✅ Backup generado exitosamente');
+
+      } catch (error) {
+        alert('Error generando backup: ' + error.message);
+        console.error(error);
+      } finally {
+        boton.disabled = false;
+        boton.innerHTML = '💾 Generar Backup Semanal';
+      }
+    }
+
+    // ==========================================
+    // EXPORTAR EXCEL
+    // ==========================================
+    function exportarExcel() {
+      const datos = casos.map(c => {
+        const tipoInfo = TIPOS_DOCUMENTO[c.tipo] || { nombre: c.tipo };
+        const subtipoInfo = tipoInfo.subtipos?.find(s => s.valor === c.subtipo) || { texto: c.subtipo };
+        const estadoInfo = ESTADOS.find(e => e.valor === c.estado) || { texto: c.estado };
+        const movsCaso = movimientos.filter(m => m.caso_id === c.id);
+        
+        return {
+          'Tipo': tipoInfo.nombre,
+          'Subtipo': subtipoInfo.texto,
+          'Título': c.titulo,
+          'Expediente': c.numero_expediente || '-',
+          'Estado': estadoInfo.texto,
+          'Descripción': c.descripcion || '-',
+          'Fecha Creación': new Date(c.created_at).toLocaleDateString('es-PY'),
+          'Movimientos': movsCaso.length,
+          'Archivos': movsCaso.filter(m => m.archivo_url).map(m => m.archivo_nombre).join(' | '),
+          'Links': movsCaso.filter(m => m.archivo_url).map(m => m.archivo_url).join(' | ')
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(datos);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Casos');
+      XLSX.writeFile(wb, `Casos_DAJ_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    // ==========================================
+    // HELPERS
+    // ==========================================
+    function getEstadoInfo(estado) {
+      return ESTADOS.find(e => e.valor === estado) || { texto: estado, color: 'bg-gray-100 text-gray-800', icono: '❓' };
+    }
+
+    function getTipoInfo(tipo) {
+      return TIPOS_DOCUMENTO[tipo] || { nombre: tipo, icono: '📄', color: 'gray', subtipos: [] };
+    }
+
+    function getSubtipoTexto(tipo, subtipo) {
+      const tipoInfo = getTipoInfo(tipo);
+      const subtipoInfo = tipoInfo.subtipos.find(s => s.valor === subtipo);
+      return subtipoInfo ? subtipoInfo.texto : subtipo;
+    }
+
+    function getCasosFiltrados() {
+      return casos.filter(c => {
+        const matchTipo = filtroTipo === 'todos' || c.tipo === filtroTipo;
+        const matchSubtipo = filtroSubtipo === 'todos' || c.subtipo === filtroSubtipo;
+        const matchEstado = filtroEstado === 'todos' || c.estado === filtroEstado;
+        const matchBusqueda = !busqueda || 
+          c.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+          (c.numero_expediente && c.numero_expediente.toLowerCase().includes(busqueda.toLowerCase()));
+        return matchTipo && matchSubtipo && matchEstado && matchBusqueda;
+      });
+    }
+
+    function toggleCaso(casoId) {
+      if (casosExpandidos.has(casoId)) {
+        casosExpandidos.delete(casoId);
+      } else {
+        casosExpandidos.add(casoId);
+      }
+      renderLista();
+    }
+
+    // ==========================================
+    // RENDER PRINCIPAL
+    // ==========================================
+    function renderApp() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white shadow-lg sticky top-0 z-50">
+          <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">⚖️</span>
+                <div>
+                  <h1 class="text-2xl font-bold">Sistema de Oficios y Cédulas</h1>
+                  <p class="text-blue-200 text-sm">Dirección de Asuntos Judiciales - Municipalidad</p>
+                </div>
+              </div>
+              
+              <div class="flex flex-wrap gap-2">
+                <button onclick="vistaActual='lista'; renderApp()"
+                  class="px-4 py-2 rounded-lg font-semibold transition ${vistaActual === 'lista' ? 'bg-white text-blue-800' : 'bg-blue-700 hover:bg-blue-600'}">
+                  📂 Ver Casos
+                </button>
+                <button onclick="vistaActual='nuevo'; renderApp()"
+                  class="px-4 py-2 rounded-lg font-semibold transition ${vistaActual === 'nuevo' ? 'bg-white text-blue-800' : 'bg-blue-700 hover:bg-blue-600'}">
+                  ➕ Nuevo Caso
+                </button>
+                <button onclick="exportarExcel()"
+                  class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg font-semibold transition">
+                  📊 Excel
+                </button>
+                <button onclick="generarBackup()"
+                  class="px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded-lg font-semibold transition">
+                  💾 Backup Semanal
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Contenido -->
+        <main class="max-w-7xl mx-auto px-4 py-6">
+          <div id="contenido"></div>
+        </main>
+      `;
+
+      renderVista();
+    }
+
+    function renderVista() {
+      if (vistaActual === 'lista') renderLista();
+      else if (vistaActual === 'nuevo') renderFormulario();
+      else if (vistaActual === 'detalle' && casoSeleccionado) verCaso(casoSeleccionado);
+    }
+
+    // ==========================================
+    // RENDER LISTA CON ÁRBOL
+    // ==========================================
+    function renderLista() {
+      const casosFiltrados = getCasosFiltrados();
+      
+      // Obtener subtipos disponibles según tipo seleccionado
+      let subtiposDisponibles = [];
+      if (filtroTipo !== 'todos' && TIPOS_DOCUMENTO[filtroTipo]) {
+        subtiposDisponibles = TIPOS_DOCUMENTO[filtroTipo].subtipos;
+      }
+      
+      document.getElementById('contenido').innerHTML = `
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl shadow-lg p-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
+              <input type="text" 
+                placeholder="🔍 Título o expediente..."
+                value="${busqueda}"
+                oninput="busqueda = this.value; renderLista()"
+                class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo</label>
+              <select onchange="filtroTipo = this.value; filtroSubtipo = 'todos'; renderLista()"
+                class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm">
+                <option value="todos">Todos los tipos</option>
+                ${Object.entries(TIPOS_DOCUMENTO).map(([key, val]) => `
+                  <option value="${key}" ${filtroTipo === key ? 'selected' : ''}>${val.icono} ${val.nombre}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Subtipo</label>
+              <select onchange="filtroSubtipo = this.value; renderLista()"
+                class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm"
+                ${filtroTipo === 'todos' ? 'disabled' : ''}>
+                <option value="todos">Todos</option>
+                ${subtiposDisponibles.map(s => `
+                  <option value="${s.valor}" ${filtroSubtipo === s.valor ? 'selected' : ''}>${s.texto}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Estado</label>
+              <select onchange="filtroEstado = this.value; renderLista()"
+                class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm">
+                <option value="todos">Todos los estados</option>
+                ${ESTADOS.map(e => `
+                  <option value="${e.valor}" ${filtroEstado === e.valor ? 'selected' : ''}>${e.icono} ${e.texto}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button onclick="filtroTipo='todos'; filtroSubtipo='todos'; filtroEstado='todos'; busqueda=''; renderLista()"
+                class="w-full px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-semibold">
+                🔄 Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <p class="text-2xl font-bold text-blue-600">${casos.length}</p>
+            <p class="text-gray-600 text-xs">Total</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <p class="text-2xl font-bold text-blue-700">${casos.filter(c => c.tipo === 'oficio').length}</p>
+            <p class="text-gray-600 text-xs">📋 Oficios</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <p class="text-2xl font-bold text-purple-600">${casos.filter(c => c.tipo === 'cedula').length}</p>
+            <p class="text-gray-600 text-xs">📜 Cédulas</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <p class="text-2xl font-bold text-yellow-600">${casos.filter(c => c.estado === 'pendiente').length}</p>
+            <p class="text-gray-600 text-xs">⏳ Pendientes</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <p class="text-2xl font-bold text-purple-600">${casos.filter(c => c.estado === 'esperando').length}</p>
+            <p class="text-gray-600 text-xs">⏰ Esperando</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <p class="text-2xl font-bold text-green-600">${casos.filter(c => c.estado === 'firmado' || c.estado === 'archivado').length}</p>
+            <p class="text-gray-600 text-xs">✅ Completados</p>
+          </div>
+        </div>
+
+        <!-- Lista de casos con árbol -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          ${casosFiltrados.length === 0 ? `
+            <div class="text-center py-12 text-gray-500">
+              <p class="text-xl">📭 No hay casos ${filtroTipo !== 'todos' || filtroEstado !== 'todos' ? 'con esos filtros' : ''}</p>
+              <button onclick="vistaActual='nuevo'; renderApp()"
+                class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                ➕ Crear Primer Caso
+              </button>
+            </div>
+          ` : `
+            <div class="divide-y divide-gray-200">
+              ${casosFiltrados.map(caso => {
+                const tipoInfo = getTipoInfo(caso.tipo);
+                const estadoInfo = getEstadoInfo(caso.estado);
+                const movsCaso = movimientos.filter(m => m.caso_id === caso.id);
+                const expandido = casosExpandidos.has(caso.id);
+                
+                return `
+                  <div class="hover:bg-gray-50">
+                    <!-- Cabecera del caso -->
+                    <div class="p-4 cursor-pointer flex items-center gap-4" onclick="toggleCaso('${caso.id}')">
+                      <button class="text-2xl transition-transform ${expandido ? 'rotate-90' : ''}">
+                        ▶
+                      </button>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-lg">${tipoInfo.icono}</span>
+                          <span class="font-bold text-gray-900">${caso.titulo}</span>
+                          ${caso.numero_expediente ? `
+                            <span class="text-sm text-gray-500">(${caso.numero_expediente})</span>
+                          ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 text-sm">
+                          <span class="px-2 py-0.5 rounded bg-${tipoInfo.color}-100 text-${tipoInfo.color}-800 text-xs">
+                            ${getSubtipoTexto(caso.tipo, caso.subtipo)}
+                          </span>
+                          <span class="text-gray-400">•</span>
+                          <span class="text-gray-500">${movsCaso.length} movimientos</span>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <select onclick="event.stopPropagation()" 
+                          onchange="actualizarEstado('${caso.id}', this.value)"
+                          class="px-3 py-1.5 rounded-full text-sm font-semibold ${estadoInfo.color} border-0 cursor-pointer">
+                          ${ESTADOS.map(e => `
+                            <option value="${e.valor}" ${caso.estado === e.valor ? 'selected' : ''}>${e.icono} ${e.texto}</option>
+                          `).join('')}
+                        </select>
+                        <button onclick="event.stopPropagation(); verCaso('${caso.id}')"
+                          class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                          Abrir 👁️
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- Árbol de movimientos (expandible) -->
+                    ${expandido ? `
+                      <div class="px-4 pb-4 ml-12">
+                        <div class="tree-line py-2">
+                          ${movsCaso.length === 0 ? `
+                            <p class="text-gray-400 text-sm italic">Sin movimientos todavía</p>
+                          ` : movsCaso.map((mov, idx) => `
+                            <div class="tree-item py-2 flex items-start gap-3">
+                              <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
+                                ${idx + 1}
+                              </div>
+                              <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900">${mov.descripcion}</p>
+                                <p class="text-xs text-gray-500">
+                                  📅 ${new Date(mov.created_at).toLocaleString('es-PY')}
+                                  ${mov.tipo_movimiento ? ` • ${mov.tipo_movimiento}` : ''}
+                                </p>
+                                ${mov.archivo_nombre ? `
+                                  <a href="${mov.archivo_url}" target="_blank" 
+                                    class="inline-flex items-center gap-1 mt-1 text-sm text-blue-600 hover:text-blue-800">
+                                    📎 ${mov.archivo_nombre}
+                                  </a>
+                                ` : ''}
+                              </div>
+                            </div>
+                          `).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // RENDER FORMULARIO NUEVO CASO
+    // ==========================================
+    function renderFormulario() {
+      document.getElementById('contenido').innerHTML = `
+        <div class="max-w-2xl mx-auto">
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">➕ Nuevo Caso</h2>
+            
+            <form onsubmit="crearCaso(event)" class="space-y-6">
+              <!-- Tipo y Subtipo -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Tipo de Documento <span class="text-red-500">*</span>
+                  </label>
+                  <select name="tipo" required id="selectTipo"
+                    onchange="actualizarSubtipos()"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                    <option value="">-- Seleccionar --</option>
+                    ${Object.entries(TIPOS_DOCUMENTO).map(([key, val]) => `
+                      <option value="${key}">${val.icono} ${val.nombre}</option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Subtipo <span class="text-red-500">*</span>
+                  </label>
+                  <select name="subtipo" required id="selectSubtipo"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                    <option value="">-- Primero seleccione tipo --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Título / Carátula <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="titulo" required
+                  placeholder="Ej: Municipalidad vs González por cobro de tributos"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Número de Expediente
+                </label>
+                <input type="text" name="numeroExpediente"
+                  placeholder="Ej: EXP-2025-001234"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Descripción / Notas
+                </label>
+                <textarea name="descripcion" rows="3"
+                  placeholder="Descripción adicional del caso..."
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  📎 Documento Inicial (Opcional)
+                </label>
+                <input type="file" name="archivo"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400">
+                <p class="text-xs text-gray-500 mt-1">PDF, DOC, DOCX, JPG, PNG</p>
+              </div>
+
+              <div class="flex gap-4">
+                <button type="button" onclick="vistaActual='lista'; renderApp()"
+                  class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50">
+                  ← Cancelar
+                </button>
+                <button type="submit"
+                  class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+                  ✅ Crear Caso
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function actualizarSubtipos() {
+      const tipoSelect = document.getElementById('selectTipo');
+      const subtipoSelect = document.getElementById('selectSubtipo');
+      const tipo = tipoSelect.value;
+      
+      if (!tipo || !TIPOS_DOCUMENTO[tipo]) {
+        subtipoSelect.innerHTML = '<option value="">-- Primero seleccione tipo --</option>';
+        return;
+      }
+      
+      const subtipos = TIPOS_DOCUMENTO[tipo].subtipos;
+      subtipoSelect.innerHTML = `
+        <option value="">-- Seleccionar --</option>
+        ${subtipos.map(s => `<option value="${s.valor}">${s.texto}</option>`).join('')}
+      `;
+    }
+
+    // ==========================================
+    // VER DETALLE DE CASO
+    // ==========================================
+    function verCaso(casoId) {
+      casoSeleccionado = casoId;
+      vistaActual = 'detalle';
+      
+      const caso = casos.find(c => c.id === casoId);
+      if (!caso) {
+        alert('Caso no encontrado');
+        vistaActual = 'lista';
+        renderApp();
+        return;
+      }
+
+      const tipoInfo = getTipoInfo(caso.tipo);
+      const estadoInfo = getEstadoInfo(caso.estado);
+      const movsCaso = movimientos
+        .filter(m => m.caso_id === casoId)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+      document.getElementById('contenido').innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <!-- Botón Volver -->
+          <button onclick="vistaActual='lista'; casoSeleccionado=null; renderApp()"
+            class="mb-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold">
+            ← Volver a Lista
+          </button>
+
+          <!-- Cabecera del Caso -->
+          <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-3xl">${tipoInfo.icono}</span>
+                  <span class="px-3 py-1 rounded-full text-sm font-semibold bg-${tipoInfo.color}-100 text-${tipoInfo.color}-800">
+                    ${tipoInfo.nombre} - ${getSubtipoTexto(caso.tipo, caso.subtipo)}
+                  </span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">${caso.titulo}</h2>
+                ${caso.numero_expediente ? `<p class="text-gray-600 mt-1">📁 Expediente: ${caso.numero_expediente}</p>` : ''}
+                ${caso.descripcion ? `<p class="text-gray-500 mt-2">${caso.descripcion}</p>` : ''}
+                <p class="text-xs text-gray-400 mt-3">
+                  📅 Creado: ${new Date(caso.created_at).toLocaleString('es-PY')}
+                </p>
+              </div>
+              <div class="text-right">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Estado:</label>
+                <select onchange="actualizarEstado('${caso.id}', this.value)"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold ${estadoInfo.color} border-2 cursor-pointer">
+                  ${ESTADOS.map(e => `
+                    <option value="${e.valor}" ${caso.estado === e.valor ? 'selected' : ''}>${e.icono} ${e.texto}</option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agregar Movimiento -->
+          <div class="bg-blue-50 rounded-xl shadow-lg p-6 mb-6">
+            <h3 class="text-lg font-bold text-blue-800 mb-4">📤 Agregar Movimiento</h3>
+            <form onsubmit="agregarMovimiento(event, '${caso.id}')" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-1">Tipo de Movimiento</label>
+                  <select name="tipoMovimiento" 
+                    class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg">
+                    <option value="envio">📤 Envío / Remisión</option>
+                    <option value="recepcion">📥 Recepción / Respuesta</option>
+                    <option value="firma">✅ Firma</option>
+                    <option value="derivacion">↪️ Derivación</option>
+                    <option value="escaneo">📄 Escaneo</option>
+                    <option value="nota">📝 Nota / Observación</option>
+                    <option value="otro">📌 Otro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-1">Cambiar Estado a</label>
+                  <select name="nuevoEstado"
+                    class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg">
+                    <option value="${caso.estado}">Sin cambio</option>
+                    ${ESTADOS.map(e => `
+                      <option value="${e.valor}">${e.icono} ${e.texto}</option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción <span class="text-red-500">*</span></label>
+                <input type="text" name="descripcion" required
+                  placeholder="Ej: Remitido a Juzgado 1ro Civil, Recibida respuesta de Fiscalía..."
+                  class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg">
+              </div>
+              <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                  <label class="block text-sm font-semibold text-gray-700 mb-1">Archivo (Opcional)</label>
+                  <input type="file" name="archivo"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    class="w-full px-3 py-2 border-2 border-blue-200 bg-white rounded-lg">
+                </div>
+                <div class="flex items-end">
+                  <button type="submit"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 whitespace-nowrap">
+                    📤 Agregar Movimiento
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Árbol de Movimientos -->
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+              🌳 Historial de Movimientos (${movsCaso.length})
+            </h3>
+            
+            ${movsCaso.length === 0 ? `
+              <div class="text-center py-8 text-gray-500">
+                <p>📭 Sin movimientos todavía</p>
+                <p class="text-sm mt-1">Agrega el primer movimiento arriba</p>
+              </div>
+            ` : `
+              <div class="relative">
+                <!-- Línea vertical del árbol -->
+                <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                
+                <div class="space-y-4">
+                  ${movsCaso.map((mov, idx) => `
+                    <div class="relative flex gap-4 pl-12">
+                      <!-- Nodo del árbol -->
+                      <div class="absolute left-3 w-5 h-5 rounded-full ${idx === movsCaso.length - 1 ? 'bg-blue-600' : 'bg-gray-400'} border-4 border-white shadow"></div>
+                      
+                      <!-- Contenido -->
+                      <div class="flex-1 bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-blue-300 transition">
+                        <div class="flex items-start justify-between gap-4">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                              <span class="font-bold text-blue-600">#${idx + 1}</span>
+                              ${mov.tipo_movimiento ? `
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                  ${mov.tipo_movimiento}
+                                </span>
+                              ` : ''}
+                            </div>
+                            <p class="font-medium text-gray-900">${mov.descripcion}</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                              📅 ${new Date(mov.created_at).toLocaleString('es-PY')}
+                            </p>
+                          </div>
+                          ${mov.archivo_nombre ? `
+                            <a href="${mov.archivo_url}" target="_blank" rel="noopener"
+                              class="flex-shrink-0 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold flex items-center gap-1">
+                              📎 ${mov.archivo_nombre.length > 20 ? mov.archivo_nombre.substring(0, 20) + '...' : mov.archivo_nombre}
+                            </a>
+                          ` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // INICIAR
+    // ==========================================
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(init, 200));
+    } else {
+      setTimeout(init, 200);
+    }
+  </script>
+</body>
+</html>
