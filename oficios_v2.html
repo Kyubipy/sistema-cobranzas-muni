@@ -88,6 +88,131 @@
     let filtroEstado = 'todos';
     let busqueda = '';
     let casosExpandidos = new Set();
+    let timeoutBusqueda = null;
+
+    // Función debounce para búsqueda - NO re-renderiza el input
+    function handleBusqueda(event) {
+      const input = event.target;
+      busqueda = input.value;
+      
+      if (timeoutBusqueda) clearTimeout(timeoutBusqueda);
+      timeoutBusqueda = setTimeout(() => {
+        actualizarListaCasos();
+        // Mantener el foco en el input
+        const inputActual = document.getElementById('inputBusqueda');
+        if (inputActual) {
+          inputActual.focus();
+          // Poner cursor al final
+          inputActual.setSelectionRange(inputActual.value.length, inputActual.value.length);
+        }
+      }, 300);
+    }
+    
+    // Manejar filtros sin perder foco de búsqueda
+    function cambiarFiltroTipo(valor) {
+      filtroTipo = valor;
+      filtroSubtipo = 'todos';
+      actualizarFiltroSubtipo();
+      actualizarListaCasos();
+    }
+    
+    function cambiarFiltroSubtipo(valor) {
+      filtroSubtipo = valor;
+      actualizarListaCasos();
+    }
+    
+    function cambiarFiltroEstado(valor) {
+      filtroEstado = valor;
+      actualizarListaCasos();
+    }
+    
+    function actualizarFiltroSubtipo() {
+      const selectSubtipo = document.getElementById('selectSubtipo');
+      if (!selectSubtipo) return;
+      
+      let subtiposDisponibles = [];
+      if (filtroTipo !== 'todos' && TIPOS_DOCUMENTO[filtroTipo]) {
+        subtiposDisponibles = TIPOS_DOCUMENTO[filtroTipo].subtipos;
+        selectSubtipo.disabled = false;
+      } else {
+        selectSubtipo.disabled = true;
+      }
+      
+      selectSubtipo.innerHTML = `
+        <option value="todos">Todos</option>
+        ${subtiposDisponibles.map(s => `
+          <option value="${s.valor}">${s.texto}</option>
+        `).join('')}
+      `;
+    }
+    
+    function limpiarFiltros() {
+      filtroTipo = 'todos';
+      filtroSubtipo = 'todos';
+      filtroEstado = 'todos';
+      busqueda = '';
+      
+      const inputBusqueda = document.getElementById('inputBusqueda');
+      const selectTipo = document.getElementById('selectTipo');
+      const selectSubtipo = document.getElementById('selectSubtipo');
+      const selectEstado = document.getElementById('selectEstado');
+      
+      if (inputBusqueda) inputBusqueda.value = '';
+      if (selectTipo) selectTipo.value = 'todos';
+      if (selectSubtipo) {
+        selectSubtipo.value = 'todos';
+        selectSubtipo.disabled = true;
+        selectSubtipo.innerHTML = '<option value="todos">Todos</option>';
+      }
+      if (selectEstado) selectEstado.value = 'todos';
+      
+      actualizarListaCasos();
+    }
+
+    // Actualizar solo la lista, no los filtros
+    function actualizarListaCasos() {
+      const contenedorLista = document.getElementById('listaCasos');
+      if (contenedorLista) {
+        contenedorLista.innerHTML = generarHTMLCasos();
+      }
+      actualizarEstadisticas();
+    }
+
+    function actualizarEstadisticas() {
+      const stats = document.getElementById('estadisticas');
+      if (stats) {
+        stats.innerHTML = generarHTMLEstadisticas();
+      }
+    }
+
+    function generarHTMLEstadisticas() {
+      return `
+        <div class="bg-white rounded-xl shadow p-3 text-center">
+          <p class="text-2xl font-bold text-blue-600">${casos.length}</p>
+          <p class="text-gray-600 text-xs">Total</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-3 text-center">
+          <p class="text-2xl font-bold text-blue-700">${casos.filter(c => c.tipo === 'oficio').length}</p>
+          <p class="text-gray-600 text-xs">📋 Oficios</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-3 text-center">
+          <p class="text-2xl font-bold text-purple-600">${casos.filter(c => c.tipo === 'cedula').length}</p>
+          <p class="text-gray-600 text-xs">📜 Cédulas</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-3 text-center">
+          <p class="text-2xl font-bold text-yellow-600">${casos.filter(c => c.estado === 'pendiente').length}</p>
+          <p class="text-gray-600 text-xs">⏳ Pendientes</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-3 text-center">
+          <p class="text-2xl font-bold text-purple-600">${casos.filter(c => c.estado === 'esperando').length}</p>
+          <p class="text-gray-600 text-xs">⏰ Esperando</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-3 text-center">
+          <p class="text-2xl font-bold text-green-600">${casos.filter(c => c.estado === 'firmado' || c.estado === 'archivado').length}</p>
+          <p class="text-gray-600 text-xs">✅ Completados</p>
+        </div>
+      `;
+    }
 
     // ==========================================
     // INICIALIZACIÓN
@@ -597,14 +722,15 @@
             <div>
               <label class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
               <input type="text" 
+                id="inputBusqueda"
                 placeholder="🔍 Título o expediente..."
                 value="${busqueda}"
-                oninput="busqueda = this.value; renderLista()"
+                oninput="handleBusqueda(event)"
                 class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm">
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo</label>
-              <select onchange="filtroTipo = this.value; filtroSubtipo = 'todos'; renderLista()"
+              <select id="selectTipo" onchange="cambiarFiltroTipo(this.value)"
                 class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm">
                 <option value="todos">Todos los tipos</option>
                 ${Object.entries(TIPOS_DOCUMENTO).map(([key, val]) => `
@@ -614,7 +740,7 @@
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-600 mb-1">Subtipo</label>
-              <select onchange="filtroSubtipo = this.value; renderLista()"
+              <select id="selectSubtipo" onchange="cambiarFiltroSubtipo(this.value)"
                 class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm"
                 ${filtroTipo === 'todos' ? 'disabled' : ''}>
                 <option value="todos">Todos</option>
@@ -625,7 +751,7 @@
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-600 mb-1">Estado</label>
-              <select onchange="filtroEstado = this.value; renderLista()"
+              <select id="selectEstado" onchange="cambiarFiltroEstado(this.value)"
                 class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-sm">
                 <option value="todos">Todos los estados</option>
                 ${ESTADOS.map(e => `
@@ -634,7 +760,7 @@
               </select>
             </div>
             <div class="flex items-end">
-              <button onclick="filtroTipo='todos'; filtroSubtipo='todos'; filtroEstado='todos'; busqueda=''; renderLista()"
+              <button onclick="limpiarFiltros()"
                 class="w-full px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-semibold">
                 🔄 Limpiar
               </button>
@@ -643,123 +769,113 @@
         </div>
 
         <!-- Estadísticas -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <p class="text-2xl font-bold text-blue-600">${casos.length}</p>
-            <p class="text-gray-600 text-xs">Total</p>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <p class="text-2xl font-bold text-blue-700">${casos.filter(c => c.tipo === 'oficio').length}</p>
-            <p class="text-gray-600 text-xs">📋 Oficios</p>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <p class="text-2xl font-bold text-purple-600">${casos.filter(c => c.tipo === 'cedula').length}</p>
-            <p class="text-gray-600 text-xs">📜 Cédulas</p>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <p class="text-2xl font-bold text-yellow-600">${casos.filter(c => c.estado === 'pendiente').length}</p>
-            <p class="text-gray-600 text-xs">⏳ Pendientes</p>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <p class="text-2xl font-bold text-purple-600">${casos.filter(c => c.estado === 'esperando').length}</p>
-            <p class="text-gray-600 text-xs">⏰ Esperando</p>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <p class="text-2xl font-bold text-green-600">${casos.filter(c => c.estado === 'firmado' || c.estado === 'archivado').length}</p>
-            <p class="text-gray-600 text-xs">✅ Completados</p>
-          </div>
+        <div id="estadisticas" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+          ${generarHTMLEstadisticas()}
         </div>
 
         <!-- Lista de casos con árbol -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-          ${casosFiltrados.length === 0 ? `
-            <div class="text-center py-12 text-gray-500">
-              <p class="text-xl">📭 No hay casos ${filtroTipo !== 'todos' || filtroEstado !== 'todos' ? 'con esos filtros' : ''}</p>
-              <button onclick="vistaActual='nuevo'; renderApp()"
-                class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                ➕ Crear Primer Caso
-              </button>
-            </div>
-          ` : `
-            <div class="divide-y divide-gray-200">
-              ${casosFiltrados.map(caso => {
-                const tipoInfo = getTipoInfo(caso.tipo);
-                const estadoInfo = getEstadoInfo(caso.estado);
-                const movsCaso = movimientos.filter(m => m.caso_id === caso.id);
-                const expandido = casosExpandidos.has(caso.id);
-                
-                return `
-                  <div class="hover:bg-gray-50">
-                    <!-- Cabecera del caso -->
-                    <div class="p-4 cursor-pointer flex items-center gap-4" onclick="toggleCaso('${caso.id}')">
-                      <button class="text-2xl transition-transform ${expandido ? 'rotate-90' : ''}">
-                        ▶
-                      </button>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                          <span class="text-lg">${tipoInfo.icono}</span>
-                          <span class="font-bold text-gray-900">${caso.titulo}</span>
-                          ${caso.numero_expediente ? `
-                            <span class="text-sm text-gray-500">(${caso.numero_expediente})</span>
-                          ` : ''}
-                        </div>
-                        <div class="flex items-center gap-2 mt-1 text-sm">
-                          <span class="px-2 py-0.5 rounded bg-${tipoInfo.color}-100 text-${tipoInfo.color}-800 text-xs">
-                            ${getSubtipoTexto(caso.tipo, caso.subtipo)}
-                          </span>
-                          <span class="text-gray-400">•</span>
-                          <span class="text-gray-500">${movsCaso.length} movimientos</span>
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <select onclick="event.stopPropagation()" 
-                          onchange="actualizarEstado('${caso.id}', this.value)"
-                          class="px-3 py-1.5 rounded-full text-sm font-semibold ${estadoInfo.color} border-0 cursor-pointer">
-                          ${ESTADOS.map(e => `
-                            <option value="${e.valor}" ${caso.estado === e.valor ? 'selected' : ''}>${e.icono} ${e.texto}</option>
-                          `).join('')}
-                        </select>
-                        <button onclick="event.stopPropagation(); verCaso('${caso.id}')"
-                          class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-                          Abrir 👁️
-                        </button>
-                      </div>
+        <div id="listaCasos" class="bg-white rounded-xl shadow-lg overflow-hidden">
+          ${generarHTMLCasos()}
+        </div>
+      `;
+    }
+
+    function generarHTMLCasos() {
+      const casosFiltrados = getCasosFiltrados();
+      
+      if (casosFiltrados.length === 0) {
+        return `
+          <div class="text-center py-12 text-gray-500">
+            <p class="text-xl">📭 No hay casos ${filtroTipo !== 'todos' || filtroEstado !== 'todos' ? 'con esos filtros' : ''}</p>
+            <button onclick="vistaActual='nuevo'; renderApp()"
+              class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              ➕ Crear Primer Caso
+            </button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="divide-y divide-gray-200">
+          ${casosFiltrados.map(caso => {
+            const tipoInfo = getTipoInfo(caso.tipo);
+            const estadoInfo = getEstadoInfo(caso.estado);
+            const movsCaso = movimientos.filter(m => m.caso_id === caso.id);
+            const expandido = casosExpandidos.has(caso.id);
+            
+            return `
+              <div class="hover:bg-gray-50">
+                <!-- Cabecera del caso -->
+                <div class="p-4 cursor-pointer flex items-center gap-4" onclick="toggleCaso('${caso.id}')">
+                  <button class="text-2xl transition-transform ${expandido ? 'rotate-90' : ''}">
+                    ▶
+                  </button>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-lg">${tipoInfo.icono}</span>
+                      <span class="font-bold text-gray-900">${caso.titulo}</span>
+                      ${caso.numero_expediente ? `
+                        <span class="text-sm text-gray-500">(${caso.numero_expediente})</span>
+                      ` : ''}
                     </div>
-                    
-                    <!-- Árbol de movimientos (expandible) -->
-                    ${expandido ? `
-                      <div class="px-4 pb-4 ml-12">
-                        <div class="tree-line py-2">
-                          ${movsCaso.length === 0 ? `
-                            <p class="text-gray-400 text-sm italic">Sin movimientos todavía</p>
-                          ` : movsCaso.map((mov, idx) => `
-                            <div class="tree-item py-2 flex items-start gap-3">
-                              <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
-                                ${idx + 1}
-                              </div>
-                              <div class="flex-1 min-w-0">
-                                <p class="font-medium text-gray-900">${mov.descripcion}</p>
-                                <p class="text-xs text-gray-500">
-                                  📅 ${new Date(mov.created_at).toLocaleString('es-PY')}
-                                  ${mov.tipo_movimiento ? ` • ${mov.tipo_movimiento}` : ''}
-                                </p>
-                                ${mov.archivo_nombre ? `
-                                  <a href="${mov.archivo_url}" target="_blank" 
-                                    class="inline-flex items-center gap-1 mt-1 text-sm text-blue-600 hover:text-blue-800">
-                                    📎 ${mov.archivo_nombre}
-                                  </a>
-                                ` : ''}
-                              </div>
-                            </div>
-                          `).join('')}
-                        </div>
-                      </div>
-                    ` : ''}
+                    <div class="flex items-center gap-2 mt-1 text-sm">
+                      <span class="px-2 py-0.5 rounded bg-${tipoInfo.color}-100 text-${tipoInfo.color}-800 text-xs">
+                        ${getSubtipoTexto(caso.tipo, caso.subtipo)}
+                      </span>
+                      <span class="text-gray-400">•</span>
+                      <span class="text-gray-500">${movsCaso.length} movimiento${movsCaso.length !== 1 ? 's' : ''}</span>
+                    </div>
                   </div>
-                `;
-              }).join('')}
-            </div>
-          `}
+                  <div class="flex items-center gap-3">
+                    <select onclick="event.stopPropagation()" 
+                      onchange="actualizarEstado('${caso.id}', this.value)"
+                      class="px-3 py-1.5 rounded-full text-sm font-semibold ${estadoInfo.color} border-0 cursor-pointer">
+                      ${ESTADOS.map(e => `
+                        <option value="${e.valor}" ${caso.estado === e.valor ? 'selected' : ''}>${e.icono} ${e.texto}</option>
+                      `).join('')}
+                    </select>
+                    <button onclick="event.stopPropagation(); verCaso('${caso.id}')"
+                      class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                      Abrir 👁️
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Árbol de movimientos (expandible) -->
+                ${expandido ? `
+                  <div class="px-4 pb-4 ml-12">
+                    <div class="tree-line py-2">
+                      ${movsCaso.length === 0 ? `
+                        <p class="text-gray-400 text-sm italic">Sin movimientos todavía</p>
+                      ` : movsCaso.slice(-5).map((mov, idx) => `
+                        <div class="tree-item py-2 flex items-start gap-3">
+                          <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
+                            ${movsCaso.length - 4 + idx > 0 ? movsCaso.length - 4 + idx : idx + 1}
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900">${mov.descripcion}</p>
+                            <p class="text-xs text-gray-500">
+                              📅 ${new Date(mov.created_at).toLocaleString('es-PY')}
+                              ${mov.tipo_movimiento ? ` • ${mov.tipo_movimiento}` : ''}
+                            </p>
+                            ${mov.archivo_nombre ? `
+                              <a href="${mov.archivo_url}" target="_blank" 
+                                class="inline-flex items-center gap-1 mt-1 text-sm text-blue-600 hover:text-blue-800">
+                                📎 ${mov.archivo_nombre}
+                              </a>
+                            ` : ''}
+                          </div>
+                        </div>
+                      `).join('')}
+                      ${movsCaso.length > 5 ? `
+                        <p class="text-xs text-gray-400 mt-2 italic">... y ${movsCaso.length - 5} movimientos anteriores. <a href="#" onclick="event.preventDefault(); verCaso('${caso.id}')" class="text-blue-600 hover:underline">Ver todos</a></p>
+                      ` : ''}
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
     }
