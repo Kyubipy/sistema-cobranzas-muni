@@ -13,6 +13,7 @@
     .tree-line { border-left: 2px solid #cbd5e1; margin-left: 20px; padding-left: 20px; }
     .tree-item::before { content: ''; position: absolute; left: -22px; top: 50%; width: 20px; height: 2px; background: #cbd5e1; }
     .tree-item { position: relative; }
+    .modal-overlay { background: rgba(0,0,0,0.5); }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -21,6 +22,74 @@
       <div class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
         <p class="mt-4 text-gray-600">Cargando Sistema...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Edición -->
+  <div id="modalEditar" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="modal-overlay fixed inset-0" onclick="cerrarModalEditar()"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+      <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-800">✏️ Editar Caso</h3>
+          <button onclick="cerrarModalEditar()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <form id="formEditar" onsubmit="guardarEdicion(event)" class="space-y-4">
+          <input type="hidden" id="editCasoId">
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Tipo</label>
+              <select id="editTipo" onchange="actualizarSubtiposEditar()"
+                class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Subtipo</label>
+              <select id="editSubtipo"
+                class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Título / Carátula <span class="text-red-500">*</span></label>
+            <input type="text" id="editTitulo" required
+              class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Número de Expediente</label>
+            <input type="text" id="editExpediente"
+              class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción / Notas</label>
+            <textarea id="editDescripcion" rows="3"
+              class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              📅 Fecha de Documento <span class="text-gray-400 text-xs">(Opcional - Recepción/Entrega)</span>
+            </label>
+            <input type="date" id="editFechaDocumento"
+              class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="cerrarModalEditar()"
+              class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50">
+              Cancelar
+            </button>
+            <button type="submit" id="btnGuardarEdicion"
+              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+              💾 Guardar Cambios
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -324,6 +393,7 @@
       try {
         const tipo = formData.get('tipo');
         const subtipo = formData.get('subtipo');
+        const fechaDocumento = formData.get('fechaDocumento') || null;
         
         const nuevoCaso = {
           tipo: tipo,
@@ -331,6 +401,7 @@
           titulo: formData.get('titulo').trim(),
           numero_expediente: formData.get('numeroExpediente')?.trim() || null,
           descripcion: formData.get('descripcion')?.trim() || '',
+          fecha_documento: fechaDocumento,
           estado: 'borrador'
         };
 
@@ -369,6 +440,97 @@
     }
 
     // ==========================================
+    // EDITAR CASO - MODAL
+    // ==========================================
+    function abrirModalEditar(casoId) {
+      const caso = casos.find(c => c.id === casoId);
+      if (!caso) return;
+
+      // Llenar select de tipos
+      const editTipo = document.getElementById('editTipo');
+      editTipo.innerHTML = Object.entries(TIPOS_DOCUMENTO).map(([key, val]) => `
+        <option value="${key}" ${caso.tipo === key ? 'selected' : ''}>${val.icono} ${val.nombre}</option>
+      `).join('');
+
+      // Llenar select de subtipos
+      actualizarSubtiposEditar(caso.subtipo);
+
+      // Llenar campos
+      document.getElementById('editCasoId').value = caso.id;
+      document.getElementById('editTitulo').value = caso.titulo || '';
+      document.getElementById('editExpediente').value = caso.numero_expediente || '';
+      document.getElementById('editDescripcion').value = caso.descripcion || '';
+      document.getElementById('editFechaDocumento').value = caso.fecha_documento || '';
+
+      // Mostrar modal
+      document.getElementById('modalEditar').classList.remove('hidden');
+    }
+
+    function actualizarSubtiposEditar(subtipoActual = null) {
+      const tipo = document.getElementById('editTipo').value;
+      const editSubtipo = document.getElementById('editSubtipo');
+      
+      if (!tipo || !TIPOS_DOCUMENTO[tipo]) {
+        editSubtipo.innerHTML = '<option value="">--</option>';
+        return;
+      }
+
+      const subtipos = TIPOS_DOCUMENTO[tipo].subtipos;
+      editSubtipo.innerHTML = subtipos.map(s => `
+        <option value="${s.valor}" ${subtipoActual === s.valor ? 'selected' : ''}>${s.texto}</option>
+      `).join('');
+    }
+
+    function cerrarModalEditar() {
+      document.getElementById('modalEditar').classList.add('hidden');
+    }
+
+    async function guardarEdicion(event) {
+      event.preventDefault();
+      const boton = document.getElementById('btnGuardarEdicion');
+      boton.disabled = true;
+      boton.innerHTML = '⏳ Guardando...';
+
+      try {
+        const casoId = document.getElementById('editCasoId').value;
+        const fechaDoc = document.getElementById('editFechaDocumento').value;
+        
+        const datosActualizados = {
+          tipo: document.getElementById('editTipo').value,
+          subtipo: document.getElementById('editSubtipo').value,
+          titulo: document.getElementById('editTitulo').value.trim(),
+          numero_expediente: document.getElementById('editExpediente').value.trim() || null,
+          descripcion: document.getElementById('editDescripcion').value.trim() || '',
+          fecha_documento: fechaDoc || null,
+          updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+          .from('casos_daj')
+          .update(datosActualizados)
+          .eq('id', casoId);
+
+        if (error) throw error;
+
+        alert('✅ Caso actualizado exitosamente');
+        cerrarModalEditar();
+        await cargarDatos();
+        
+        if (vistaActual === 'detalle') {
+          verCaso(casoId);
+        } else {
+          renderVista();
+        }
+
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      } finally {
+        boton.disabled = false;
+        boton.innerHTML = '💾 Guardar Cambios';
+      }
+    }
+
+    // ==========================================
     // AGREGAR MOVIMIENTO
     // ==========================================
     async function agregarMovimiento(event, casoId) {
@@ -391,10 +553,13 @@
           archivoNombre = archivo.name;
         }
 
+        const fechaMov = formData.get('fechaMovimiento') || null;
+
         const nuevoMovimiento = {
           caso_id: casoId,
           tipo_movimiento: formData.get('tipoMovimiento'),
           descripcion: formData.get('descripcion').trim(),
+          fecha_documento: fechaMov,
           archivo_nombre: archivoNombre,
           archivo_url: archivoUrl
         };
@@ -491,6 +656,7 @@
               indice += `\n     📁 ${caso.titulo}\n`;
               indice += `        Expediente: ${caso.numero_expediente || 'S/N'}\n`;
               indice += `        Estado: ${estadoInfo.texto}\n`;
+              indice += `        Fecha Doc: ${caso.fecha_documento || '-'}\n`;
               indice += `        Movimientos: ${movsCaso.length}\n`;
               
               // Crear carpeta del caso
@@ -503,6 +669,7 @@
               infoCaso += `Subtipo: ${subtipo.texto}\n`;
               infoCaso += `Estado: ${estadoInfo.texto}\n`;
               infoCaso += `Descripción: ${caso.descripcion || '-'}\n`;
+              infoCaso += `Fecha Documento: ${caso.fecha_documento || '-'}\n`;
               infoCaso += `Creado: ${new Date(caso.created_at).toLocaleString('es-PY')}\n`;
               infoCaso += `\n${'─'.repeat(40)}\nHISTORIAL DE MOVIMIENTOS:\n${'─'.repeat(40)}\n\n`;
               
@@ -511,6 +678,9 @@
                 infoCaso += `${idx + 1}. [${new Date(mov.created_at).toLocaleString('es-PY')}]\n`;
                 infoCaso += `   Tipo: ${tipoMov}\n`;
                 infoCaso += `   Descripción: ${mov.descripcion}\n`;
+                if (mov.fecha_documento) {
+                  infoCaso += `   Fecha Doc: ${mov.fecha_documento}\n`;
+                }
                 if (mov.archivo_nombre) {
                   infoCaso += `   Archivo: ${mov.archivo_nombre}\n`;
                   infoCaso += `   URL: ${mov.archivo_url}\n`;
@@ -551,6 +721,7 @@
             'Expediente': c.numero_expediente || '-',
             'Estado': estadoInfo.texto,
             'Descripción': c.descripcion || '-',
+            'Fecha Documento': c.fecha_documento || '-',
             'Fecha Creación': new Date(c.created_at).toLocaleDateString('es-PY'),
             'Última Actualización': c.updated_at ? new Date(c.updated_at).toLocaleDateString('es-PY') : '-',
             'Cant. Movimientos': movsCaso.length,
@@ -597,6 +768,7 @@
           'Expediente': c.numero_expediente || '-',
           'Estado': estadoInfo.texto,
           'Descripción': c.descripcion || '-',
+          'Fecha Documento': c.fecha_documento || '-',
           'Fecha Creación': new Date(c.created_at).toLocaleDateString('es-PY'),
           'Movimientos': movsCaso.length,
           'Archivos': movsCaso.filter(m => m.archivo_url).map(m => m.archivo_nombre).join(' | '),
@@ -648,6 +820,11 @@
       renderLista();
     }
 
+    function formatearFecha(fecha) {
+      if (!fecha) return null;
+      return new Date(fecha + 'T00:00:00').toLocaleDateString('es-PY');
+    }
+
     // ==========================================
     // RENDER PRINCIPAL
     // ==========================================
@@ -655,7 +832,7 @@
       const app = document.getElementById('app');
       app.innerHTML = `
         <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white shadow-lg sticky top-0 z-50">
+        <header class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white shadow-lg sticky top-0 z-40">
           <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div class="flex items-center gap-3">
@@ -818,15 +995,23 @@
                         <span class="text-sm text-gray-500">(${caso.numero_expediente})</span>
                       ` : ''}
                     </div>
-                    <div class="flex items-center gap-2 mt-1 text-sm">
+                    <div class="flex items-center gap-2 mt-1 text-sm flex-wrap">
                       <span class="px-2 py-0.5 rounded bg-${tipoInfo.color}-100 text-${tipoInfo.color}-800 text-xs">
                         ${getSubtipoTexto(caso.tipo, caso.subtipo)}
                       </span>
                       <span class="text-gray-400">•</span>
-                      <span class="text-gray-500">${movsCaso.length} movimiento${movsCaso.length !== 1 ? 's' : ''}</span>
+                      <span class="text-gray-500">${movsCaso.length} mov.</span>
+                      ${caso.fecha_documento ? `
+                        <span class="text-gray-400">•</span>
+                        <span class="text-gray-500 text-xs">📅 ${formatearFecha(caso.fecha_documento)}</span>
+                      ` : ''}
                     </div>
                   </div>
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="event.stopPropagation(); abrirModalEditar('${caso.id}')"
+                      class="px-2 py-1.5 bg-yellow-100 text-yellow-700 rounded-lg text-sm hover:bg-yellow-200" title="Editar">
+                      ✏️
+                    </button>
                     <select onclick="event.stopPropagation()" 
                       onchange="actualizarEstado('${caso.id}', this.value)"
                       class="px-3 py-1.5 rounded-full text-sm font-semibold ${estadoInfo.color} border-0 cursor-pointer">
@@ -836,7 +1021,7 @@
                     </select>
                     <button onclick="event.stopPropagation(); verCaso('${caso.id}')"
                       class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-                      Abrir 👁️
+                      👁️
                     </button>
                   </div>
                 </div>
@@ -857,6 +1042,7 @@
                             <p class="text-xs text-gray-500">
                               📅 ${new Date(mov.created_at).toLocaleString('es-PY')}
                               ${mov.tipo_movimiento ? ` • ${mov.tipo_movimiento}` : ''}
+                              ${mov.fecha_documento ? ` • 📋 Doc: ${formatearFecha(mov.fecha_documento)}` : ''}
                             </p>
                             ${mov.archivo_nombre ? `
                               <a href="${mov.archivo_url}" target="_blank" 
@@ -896,7 +1082,7 @@
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
                     Tipo de Documento <span class="text-red-500">*</span>
                   </label>
-                  <select name="tipo" required id="selectTipo"
+                  <select name="tipo" required id="selectTipoNuevo"
                     onchange="actualizarSubtipos()"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
                     <option value="">-- Seleccionar --</option>
@@ -909,7 +1095,7 @@
                   <label class="block text-sm font-semibold text-gray-700 mb-2">
                     Subtipo <span class="text-red-500">*</span>
                   </label>
-                  <select name="subtipo" required id="selectSubtipo"
+                  <select name="subtipo" required id="selectSubtipoNuevo"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
                     <option value="">-- Primero seleccione tipo --</option>
                   </select>
@@ -943,6 +1129,16 @@
                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
               </div>
 
+              <!-- NUEVO CAMPO: Fecha de Documento -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  📅 Fecha de Documento <span class="text-gray-400 text-xs">(Opcional - Recepción/Entrega)</span>
+                </label>
+                <input type="date" name="fechaDocumento"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                <p class="text-xs text-gray-500 mt-1">Fecha de recepción o entrega física del documento</p>
+              </div>
+
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
                   📎 Documento Inicial (Opcional)
@@ -970,8 +1166,8 @@
     }
 
     function actualizarSubtipos() {
-      const tipoSelect = document.getElementById('selectTipo');
-      const subtipoSelect = document.getElementById('selectSubtipo');
+      const tipoSelect = document.getElementById('selectTipoNuevo');
+      const subtipoSelect = document.getElementById('selectSubtipoNuevo');
       const tipo = tipoSelect.value;
       
       if (!tipo || !TIPOS_DOCUMENTO[tipo]) {
@@ -1019,17 +1215,27 @@
           <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
+                <div class="flex items-center gap-2 mb-2 flex-wrap">
                   <span class="text-3xl">${tipoInfo.icono}</span>
                   <span class="px-3 py-1 rounded-full text-sm font-semibold bg-${tipoInfo.color}-100 text-${tipoInfo.color}-800">
                     ${tipoInfo.nombre} - ${getSubtipoTexto(caso.tipo, caso.subtipo)}
                   </span>
+                  <button onclick="abrirModalEditar('${caso.id}')"
+                    class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-sm hover:bg-yellow-200 font-semibold">
+                    ✏️ Editar
+                  </button>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900">${caso.titulo}</h2>
                 ${caso.numero_expediente ? `<p class="text-gray-600 mt-1">📁 Expediente: ${caso.numero_expediente}</p>` : ''}
                 ${caso.descripcion ? `<p class="text-gray-500 mt-2">${caso.descripcion}</p>` : ''}
+                ${caso.fecha_documento ? `
+                  <p class="text-blue-600 font-semibold mt-2">
+                    📅 Fecha de Documento: ${formatearFecha(caso.fecha_documento)}
+                  </p>
+                ` : ''}
                 <p class="text-xs text-gray-400 mt-3">
-                  📅 Creado: ${new Date(caso.created_at).toLocaleString('es-PY')}
+                  🕐 Creado: ${new Date(caso.created_at).toLocaleString('es-PY')}
+                  ${caso.updated_at ? ` | Actualizado: ${new Date(caso.updated_at).toLocaleString('es-PY')}` : ''}
                 </p>
               </div>
               <div class="text-right">
@@ -1079,6 +1285,17 @@
                   placeholder="Ej: Remitido a Juzgado 1ro Civil, Recibida respuesta de Fiscalía..."
                   class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg">
               </div>
+              
+              <!-- NUEVO CAMPO: Fecha del movimiento -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">
+                  📅 Fecha de Documento <span class="text-gray-400 text-xs">(Opcional)</span>
+                </label>
+                <input type="date" name="fechaMovimiento"
+                  class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg">
+                <p class="text-xs text-gray-500 mt-1">Fecha de recepción/entrega física (si aplica)</p>
+              </div>
+
               <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-1">
                   <label class="block text-sm font-semibold text-gray-700 mb-1">Archivo (Opcional)</label>
@@ -1120,9 +1337,9 @@
                       
                       <!-- Contenido -->
                       <div class="flex-1 bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-blue-300 transition">
-                        <div class="flex items-start justify-between gap-4">
-                          <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
                               <span class="font-bold text-blue-600">#${idx + 1}</span>
                               ${mov.tipo_movimiento ? `
                                 <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
@@ -1131,9 +1348,12 @@
                               ` : ''}
                             </div>
                             <p class="font-medium text-gray-900">${mov.descripcion}</p>
-                            <p class="text-xs text-gray-500 mt-1">
-                              📅 ${new Date(mov.created_at).toLocaleString('es-PY')}
-                            </p>
+                            <div class="text-xs text-gray-500 mt-1 space-y-0.5">
+                              <p>🕐 Registrado: ${new Date(mov.created_at).toLocaleString('es-PY')}</p>
+                              ${mov.fecha_documento ? `
+                                <p class="text-blue-600 font-semibold">📅 Fecha Doc: ${formatearFecha(mov.fecha_documento)}</p>
+                              ` : ''}
+                            </div>
                           </div>
                           ${mov.archivo_nombre ? `
                             <a href="${mov.archivo_url}" target="_blank" rel="noopener"
